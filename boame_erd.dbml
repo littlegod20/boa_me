@@ -1,0 +1,167 @@
+Enum role {
+    provider
+    customer
+    admin
+}
+
+Table user {
+    id uuid [pk]
+    name varchar
+    email varchar
+    password varchar
+    role role
+    phone_number varchar
+    address varchar
+    profile_picture varchar
+    is_email_verified boolean
+    created_at datetime
+    updated_at datetime
+    is_online boolean [note: "boolean to check if user is online"]
+}
+
+Enum payout_method {
+    mobile_money
+    bank
+}
+
+Enum momo_provider {
+    mtn
+    telecel
+    airtel_tigo
+}
+
+Table provider {
+    id uuid [pk]
+    user_id uuid [ref: > user.id]
+    is_verified boolean [null]
+    payout_method payout_method
+    momo_number varchar
+    momo_provider momo_provider
+    bank_account_number varchar
+    bank_account_name varchar
+    bank_code varchar
+    total_jobs_completed int
+    id_document_url varchar
+    service_area varchar [note:"areas in the country the provider renders services"]
+}
+
+Table provider_service {
+    id uuid [pk]
+    provider_id uuid [ref: > provider.id, note:"referencing provider"]
+    service_id uuid [ref: > service.id]
+    price decimal
+    created_at datetime
+    updated_at datetime
+}
+
+Table category {
+    id uuid [pk]
+    name varchar
+    description varchar
+    created_at datetime
+    updated_at datetime
+}
+
+Table service {
+    id uuid [pk]
+    name varchar
+    category_id uuid [ref: > category.id]
+    image varchar
+    description varchar
+    created_at datetime
+    updated_at datetime
+}
+
+Enum booking_status {
+    pending
+    confirmed
+    cancelled
+    in_progress
+    completed
+}
+
+Table booking {
+    id uuid [pk]
+    customer_id uuid [ref: > user.id, note: "The user who requests the service"]
+    provider_service_id uuid [ref: > provider_service.id]
+    booking_date datetime
+    booking_time datetime
+    booking_status booking_status
+    location varchar
+    created_at datetime
+    updated_at datetime
+}
+
+Table review {
+    id uuid [pk]
+    customer_id uuid [ref: > user.id, note: "Customer reviews the provider"]
+    provider_id uuid [ref: > provider.user_id, note: "Provider is reviewed by the customer"]
+    booking_id uuid [ref: > booking.id]
+    rating int
+    comment varchar
+    created_at datetime
+    updated_at datetime
+}
+
+Enum payment_status {
+    pending
+    success
+    cancelled
+    failed
+}
+Table payment {
+    id uuid [pk]
+    customer_id uuid [ref: > user.id]
+    booking_id uuid [ref: > booking.id]
+    amount decimal
+    payment_date datetime
+    payment_status payment_status
+    paystack_reference varchar
+    created_at datetime
+    updated_at datetime
+}
+
+Enum transaction_type {
+    payout 
+    payin
+    refund
+}
+
+Enum transaction_status {
+    pending
+    completed
+    cancelled
+}
+
+Table transaction {
+    id uuid [pk]
+    customer_id uuid [ref: > user.id]
+    provider_id uuid [ref: > user.id]
+    payment_id uuid [ref: > payment.id]
+    amount decimal
+    transaction_type transaction_type
+    transaction_date datetime
+    transaction_status transaction_status
+    created_at datetime
+    updated_at datetime
+}
+
+Table message {
+    id uuid [pk]
+    content varchar
+    conversation_id uuid [ref:> conversation.id]
+    sender_id uuid [ref: > user.id]
+    timestamp datetime
+    is_seen boolean
+    created_at datetime
+    updated_at datetime
+}
+
+Table conversation {
+    id uuid [pk]
+    booking_id uuid [ref: > booking.id, null]
+    customer_id uuid [ref: > user.id]
+    provider_id uuid [ref: > user.id]
+    created_at datetime
+    updated_at datetime
+}
