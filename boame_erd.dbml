@@ -8,15 +8,19 @@ Table user {
     id uuid [pk]
     name varchar
     email varchar
-    password varchar
+    password varchar [null]
     role role
     phone_number varchar
     address varchar
     profile_picture varchar
-    is_email_verified boolean
     created_at datetime
     updated_at datetime
     is_online boolean [note: "boolean to check if user is online"]
+    email_verification_token varchar
+    email_verified_at datetime
+    forgot_password_token varchar [note:"hashed"]
+    email_verification_token_expires_at datetime
+    forgot_password_token_expires_at datetime 
 }
 
 Enum payout_method {
