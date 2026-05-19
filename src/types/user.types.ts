@@ -24,6 +24,14 @@ export interface User{
 }
 
 
+export type AuthUser = {
+    id: string
+    role: Role
+    name: string
+    email: string
+  }
+
+
 export type CreateUserInput = {
     name:string
     email:string

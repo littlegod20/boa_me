@@ -37,3 +37,37 @@ export const createUser = async (input: CreateUserInput): Promise<User>=>{
         throw error
     }
 }
+
+export const findUserByVerificationToken = async (token:string): Promise< User | null > => {
+    const pool = getPool()
+    try {
+        const result = await pool.query(`SELECT * FROM users WHERE email_verification_token = $1`, [token])
+        return result.rows[0] || null
+
+    } catch (error) {
+        throw error
+    }
+}
+
+export const verifyUserEmail = async (id:string) => {
+    const pool = getPool()
+    try {
+        // get user by email and update email_verified_at, email_verification_token and email_verification_token_expires_at
+        const result = await pool.query(`
+            UPDATE users 
+            SET email_verified_at = $1, email_verification_token = $2, email_verification_token_expires_at= $3
+            WHERE id = $4
+            RETURNING *`,
+            [
+                new Date(),
+                null,
+                null,
+                id
+            ]
+        )
+
+        return result.rows[0]
+    } catch (error) {
+        throw error
+    }
+}

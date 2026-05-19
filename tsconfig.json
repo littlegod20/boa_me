@@ -6,9 +6,11 @@
     "moduleResolution": "node",
     "rootDir": "./src",
     "esModuleInterop": true,
-    "types": [],
     "forceConsistentCasingInFileNames":true,
     "strict": true,
     "skipLibCheck": true,
+  },
+  "ts-node":{
+    "files":true
   }
 }

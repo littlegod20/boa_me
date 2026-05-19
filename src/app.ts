@@ -3,6 +3,7 @@ import cors from 'cors'
 import helmet from 'helmet'
 import { errorHandler } from "./middlewares/errorHandler"
 import appRoutes from './routes/index'
+import { authenticate } from "./middlewares/auth.middleware"
 
 
 
@@ -13,7 +14,7 @@ export const createApp = () => {
     app.use(cors())
     app.use(helmet())
 
-    app.get('/health',(req, res)=> {
+    app.get('/health' ,(req, res)=> {
         res.send('Ok')
     })
 

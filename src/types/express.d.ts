@@ -1,7 +1,10 @@
-import { User } from "./user.types";
+import { AuthUser } from "./user.types";
 
-declare namespace Express {
+declare global {
+    namespace Express {
     interface Request{
-        user: User
+        user: AuthUser
     }
 }
+}
+export {}
