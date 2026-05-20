@@ -10,7 +10,7 @@ type JwtPayload = {
 
 
 
-export const generateToken =(payload:JwtPayload):string=>{
+export const generateJwtToken =(payload:JwtPayload):string=>{
     const token = jwt.sign(payload,process.env.JWT_SECRET!, {expiresIn: '7d'})
     return token
 }

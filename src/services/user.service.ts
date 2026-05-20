@@ -71,3 +71,63 @@ export const verifyUserEmail = async (id:string) => {
         throw error
     }
 }
+
+export const storeForgotPasswordToken = async (email:string, token:string, token_expiry:Date):
+    Promise<{
+        forgot_password_token:string, 
+        forgot_password_token_expires_at:string
+    }> => {
+    try {
+        const pool = getPool()
+        const result = await pool.query(`
+            UPDATE users
+            SET forgot_password_token=$1, forgot_password_token_expires_at=$2
+            WHERE email =$3
+            RETURNING forgot_password_token, forgot_password_token_expires_at`,
+            [
+                token,
+                token_expiry,
+                email
+            ]
+        )
+
+        return result.rows[0]
+
+    } catch (error) {
+        throw error
+    }
+}
+
+export const findUserByForgotPasswordToken = async (token:string):Promise<User|null> => {
+    try {
+        const pool = getPool()
+        const result = await pool.query(
+            `SELECT * FROM users WHERE forgot_password_token=$1`,
+            [token]
+        )
+        return result.rows[0] || null
+    } catch (error) {
+        throw error
+    }
+}
+
+
+export const resetPassword = async (id:string, password:string) => {
+    try {
+        const pool = getPool()
+        const result = await pool.query(`
+            UPDATE users
+            SET forgot_password_token=$1, forgot_password_token_expires_at=$2, password=$3
+            WHERE id=$4`,
+            [
+                null,
+                null,
+                password,
+                id
+            ]
+        )
+        return result.rows[0]
+    } catch (error) {
+        throw error
+    }
+}

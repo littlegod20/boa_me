@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { loginUser, registerUser, verifyEmail } from "../services/auth.service";
+import { forgotPassword, loginUser, registerUser, resetUserPassword, verifyEmail } from "../services/auth.service";
 
 
 export const register = async (req:Request, res:Response) => {
@@ -16,5 +16,17 @@ export const verify = async (req:Request, res:Response) => {
 export const login = async (req:Request, res:Response) => {
     const {email, password} = req.body
     const result = await loginUser(email, password)
+    res.status(200).json(result)
+}
+
+export const userForgotPassword = async (req:Request, res:Response) => {
+    const email = req.body.email
+    const result = await forgotPassword(email)
+    res.status(200).json(result)
+}
+
+export const passwordReset = async (req:Request, res:Response) => {
+    const {password,token} = req.body
+    const result = await resetUserPassword(token, password)
     res.status(200).json(result)
 }

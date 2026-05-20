@@ -1,9 +1,11 @@
 import bcrypt from 'bcrypt'
 import { RegisterInput } from '../types/user.types'
 import { generateVerificationToken } from '../utils/token.utils'
-import { createUser, findUserByEmail, findUserByVerificationToken, verifyUserEmail } from './user.service'
+import { createUser, findUserByEmail, findUserByForgotPasswordToken, findUserByVerificationToken, resetPassword, storeForgotPasswordToken, verifyUserEmail } from './user.service'
 import { AppError } from '../middlewares/errorHandler'
-import { generateToken } from '../utils/jwt.utils'
+import { generateJwtToken } from '../utils/jwt.utils'
+import crypto from 'crypto'
+import { sendEmailVerificationToken, sendPasswordResetEmail } from '../utils/email.utils'
 
 
 export const registerUser = async (user:RegisterInput)=>{
@@ -29,7 +31,7 @@ export const registerUser = async (user:RegisterInput)=>{
         })
 
         // send verification email
-        console.log('sending email verification link to user')
+        await sendEmailVerificationToken(email_token.token, user.email)
 
         return {success:true, message:'User created successfully'}
     } catch (error) {
@@ -92,7 +94,7 @@ export const loginUser = async (email:string, user_password:string) => {
         }
         
         // sign token
-        const token = generateToken(payload)
+        const token = generateJwtToken(payload)
 
         const { password, email_verification_token, forgot_password_token, ...safeUser } = existingUser
 
@@ -107,4 +109,62 @@ export const loginUser = async (email:string, user_password:string) => {
         throw error
     }
 
+}
+
+export const forgotPassword = async (email:string) => {
+    try {
+        const user = await findUserByEmail(email)
+
+        if (!user){
+            throw new AppError('User not found!', 404)
+        }
+
+        // generate forgot password token
+        const passwordToken = generateVerificationToken()
+
+        const hashToken = crypto.createHash('sha256').update(passwordToken.token).digest('hex')
+
+        await storeForgotPasswordToken(email, hashToken, passwordToken.expiry)
+
+        await sendPasswordResetEmail(user.email, passwordToken.token)
+
+        return {
+            success: true, message: 'Password reset email sent'
+        }
+    } catch (error) {
+        throw error
+    }
+}
+
+export const resetUserPassword = async (token:string, password:string)=>{
+    try {
+        // hash password token 
+        const hashed_token = crypto.createHash('sha256').update(token).digest('hex')
+        const user = await findUserByForgotPasswordToken(hashed_token)
+
+        if (!user || !user.forgot_password_token_expires_at){
+            throw new AppError('Invalid token!', 401)
+        } 
+
+        // check if the token has expired
+        const is_token_expired = user.forgot_password_token_expires_at < new Date()
+
+        if (is_token_expired){
+            throw new AppError('Token has expired!', 400)
+        }
+
+        // hash new password
+        const salt = await bcrypt.genSalt(10)
+        const hashed_password = await bcrypt.hash(password, salt)
+
+        await resetPassword(user.id, hashed_password)
+
+        return { 
+            success: true,
+            message: 'Password reset successfully'
+        }
+
+    } catch (error) {
+        throw error
+    }
 }
