@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { forgotPassword, loginUser, registerUser, resetUserPassword, verifyEmail } from "../services/auth.service";
+import { generateJwtToken } from "../utils/jwt.utils";
+import { Role, User } from "../types/user.types";
 
 
 export const register = async (req:Request, res:Response) => {
@@ -29,4 +31,20 @@ export const passwordReset = async (req:Request, res:Response) => {
     const {password,token} = req.body
     const result = await resetUserPassword(token, password)
     res.status(200).json(result)
+}
+
+export const googleAuthCallback = async (req:Request, res:Response) => {
+    const {id, name, email, role} = req.user as User
+    const payload = {
+        id,
+        name,
+        role,
+        email
+    }
+    const token = generateJwtToken(payload)
+
+    // temporary — for testing only
+    // res.status(200).json({ token, user: req.user })
+
+    res.redirect(`boame://auth/callback?token=${token}`)
 }

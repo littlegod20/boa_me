@@ -16,6 +16,7 @@ export interface User{
     created_at:Date
     updated_at:Date
     is_online?:boolean
+    google_id?:string
     email_verification_token?:string
     email_verified_at?:Date
     forgot_password_token?:string
@@ -35,13 +36,15 @@ export type AuthUser = {
 export type CreateUserInput = {
     name:string
     email:string
-    password:string
+    password?:string
     role:Role
     address?:string
     profile_picture?:string
+    google_id?:string
     phone_number?:string
     email_verification_token?:string
     email_verification_token_expires_at?:Date
+    email_verified_at?:Date
 }
 
 export type RegisterInput = {

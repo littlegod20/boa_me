@@ -16,8 +16,8 @@ export const createUser = async (input: CreateUserInput): Promise<User>=>{
     const pool = getPool()
     try {
         const result = await pool.query(`
-            INSERT INTO users (name, email, password, role, email_verification_token, email_verification_token_expires_at, address, profile_picture, phone_number)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            INSERT INTO users (name, email, password, role, email_verification_token, email_verification_token_expires_at, address, profile_picture, phone_number, google_id, email_verified_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *
             `, 
             [
@@ -29,7 +29,9 @@ export const createUser = async (input: CreateUserInput): Promise<User>=>{
                 input.email_verification_token_expires_at,
                 input.address,
                 input.profile_picture,
-                input.phone_number
+                input.phone_number,
+                input.google_id,
+                input.email_verified_at
             ]
         )
         return result.rows[0]
