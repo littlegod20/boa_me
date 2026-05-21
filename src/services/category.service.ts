@@ -23,10 +23,13 @@ export const insertCategory = async(input:CreateCategory):Promise<Category | nul
 
 export const findCategoryById = async(id:string):Promise<Category | null> => {
     try {
+        console.log('get id here:', id)
         const pool = getPool()
         const result = await pool.query(`SELECT * FROM categories WHERE id=$1`,[id])
+        console.log("result here:", result)
         return result.rows[0] || null
     } catch (error) {
+        console.error('findCategoryById error:', error)
         throw error
     }
 }
