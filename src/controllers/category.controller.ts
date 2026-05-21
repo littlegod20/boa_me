@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { AppError } from "../middlewares/errorHandler"
-import { fetchAllCategories, findCategoryById, insertCategory, modifyCategory } from "../services/category.service"
+import { deleteCategory, fetchAllCategories, findCategoryById, insertCategory, modifyCategory } from "../services/category.service"
 
 
 export const createCategory = async (req:Request, res:Response) =>{
@@ -51,5 +51,24 @@ export const updateCategory = async(req:Request, res:Response) => {
         success:true,
         message:'Category updated successfully',
         data: result
+    })
+}
+
+export const removeCategory = async(req:Request, res:Response) => {
+    const {categoryId} = req.params
+
+    if(!categoryId || typeof categoryId != 'string'){
+        throw new AppError('Invalid id!', 400)
+    }
+
+    const result = await deleteCategory(categoryId)
+
+    if(!result){
+        throw new AppError('Category not found', 404)
+    }
+
+    res.status(200).json({
+        success:true,
+        message:'Category deleted successfully'
     })
 }

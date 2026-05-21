@@ -4,10 +4,9 @@ import jwt from "jsonwebtoken"
 type JwtPayload = {
     id:string
     role:Role
-    name:string
-    email:string
+    name?:string
+    email?:string
 }
-
 
 
 export const generateJwtToken =(payload:JwtPayload):string=>{

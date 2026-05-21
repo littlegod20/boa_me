@@ -1,10 +1,10 @@
 import { getPool } from "../config/database.config"
-import { Query } from "../types/pagination.service"
+import { QueryType } from "../types/pagination.types"
 import { CreateService, Service, ServiceWithCategory } from "../types/services.types"
 
 
 
-export const fetchAllServices = async(categoryId:string | undefined, query:Query):Promise<ServiceWithCategory[] | null> => {
+export const fetchAllServices = async(categoryId:string | undefined, query:QueryType):Promise<ServiceWithCategory[] | null> => {
     try {
         const conditions = []
         const values = []
@@ -114,6 +114,19 @@ export const modifyService = async(serviceId:string, update:CreateService):Promi
             `
             
         const result = await pool.query(query, values)
+        return result.rows[0] || null
+    } catch (error) {
+        throw error
+    }
+}
+
+export const deleteService = async(serviceId:string):Promise<Service | null> => {
+    try {
+        const pool = getPool()
+        const result = await pool.query(
+            `DELETE FROM services WHERE id=$1 RETURNING *`,
+            [serviceId]
+        )
         return result.rows[0] || null
     } catch (error) {
         throw error

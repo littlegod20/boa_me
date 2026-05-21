@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import { AppError } from "../middlewares/errorHandler"
-import { fetchAllServices, findServiceById, insertService, modifyService } from "../services/service.service"
+import { deleteService, fetchAllServices, findServiceById, insertService, modifyService } from "../services/service.service"
 import { findCategoryById } from "../services/category.service"
 import { uuidRegex } from "../utils/regex.utils"
 
@@ -71,5 +71,24 @@ export const updateService = async(req:Request, res:Response) => {
         success:true,
         message:'Service updated successfully',
         data: result
+    })
+}
+
+export const removeService = async(req:Request, res:Response) => {
+    const {serviceId} = req.params
+
+    if(!serviceId || typeof serviceId != 'string'){
+        throw new AppError('Invalid id!', 400)
+    }
+
+    const result = await deleteService(serviceId)
+
+    if(!result){
+        throw new AppError('Service not found', 404)
+    }
+
+    res.status(200).json({
+        success:true,
+        message:'Service deleted successfully'
     })
 }

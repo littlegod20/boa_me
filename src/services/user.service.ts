@@ -1,4 +1,4 @@
-import { CreateUserInput, User } from "../types/user.types";
+import { CreateUserInput, Role, User } from "../types/user.types";
 import { getPool } from "../config/database.config";
 
 
@@ -129,6 +129,79 @@ export const resetPassword = async (id:string, password:string) => {
             ]
         )
         return result.rows[0]
+    } catch (error) {
+        throw error
+    }
+}
+
+
+export const updateUser = async (
+    id: string,
+    update: Partial<{
+        email: string
+        name: string
+        password: string
+        phone_number: string
+        profile_picture: string
+        address: string
+        role: Role
+        is_online: boolean
+    }>
+): Promise<User | null> => {
+    try {
+        const pool = getPool()
+
+        const fields: string[] = []
+        const values: any[] = []
+        let idx = 1
+
+        if (update.email !== undefined) {
+            fields.push(`email = $${idx++}`)
+            values.push(update.email)
+        }
+        if (update.name !== undefined) {
+            fields.push(`name = $${idx++}`)
+            values.push(update.name)
+        }
+        if (update.phone_number !== undefined) {
+            fields.push(`phone_number = $${idx++}`)
+            values.push(update.phone_number)
+        }
+        if (update.address !== undefined) {
+            fields.push(`address = $${idx++}`)
+            values.push(update.address)
+        }
+        if (update.profile_picture !== undefined) {
+            fields.push(`profile_picture = $${idx++}`)
+            values.push(update.profile_picture)
+        }
+        if (update.password !== undefined) {
+            fields.push(`password = $${idx++}`)
+            values.push(update.password)
+        }
+        if (update.is_online !== undefined) {
+            fields.push(`is_online = $${idx++}`)
+            values.push(update.is_online)
+        }
+        if (update.role !== undefined) {
+            fields.push(`role = $${idx++}`)
+            values.push(update.role)
+        }
+    
+        if (fields.length === 0) {
+            return null
+        }
+
+        const query = `
+            UPDATE users
+            SET ${fields.join(', ')}
+            WHERE id = $${idx}
+            RETURNING *
+        `
+        values.push(id)
+
+        const result = await pool.query(query, values)
+        return result.rows[0] || null
     } catch (error) {
         throw error
     }

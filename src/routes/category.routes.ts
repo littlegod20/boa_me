@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { createCategory, getAllCategories, getCategoryById, updateCategory } from "../controllers/category.controller";
+import { createCategory, getAllCategories, getCategoryById, removeCategory, updateCategory } from "../controllers/category.controller";
 import { authenticate } from "../middlewares/auth.middleware";
 import { isAdmin } from "../middlewares/role.middleware";
 
@@ -9,5 +9,6 @@ router.post('/', authenticate , isAdmin, createCategory)
 router.get('/',  getAllCategories)
 router.get('/:categoryId', getCategoryById)
 router.patch('/:categoryId', authenticate, isAdmin, updateCategory)
+router.delete('/:categoryId', authenticate, isAdmin, removeCategory)
 
 export default router

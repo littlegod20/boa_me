@@ -23,10 +23,8 @@ export const insertCategory = async(input:CreateCategory):Promise<Category | nul
 
 export const findCategoryById = async(id:string):Promise<Category | null> => {
     try {
-        console.log('get id here:', id)
         const pool = getPool()
         const result = await pool.query(`SELECT * FROM categories WHERE id=$1`,[id])
-        console.log("result here:", result)
         return result.rows[0] || null
     } catch (error) {
         console.error('findCategoryById error:', error)
@@ -81,4 +79,17 @@ export const modifyCategory = async(id:string, update:CreateCategory):Promise<Ca
     } catch (error) {
         throw error
     }
-} 
+}
+
+export const deleteCategory = async(id:string):Promise<Category | null> => {
+    try {
+        const pool = getPool()
+        const result = await pool.query(
+            `DELETE FROM categories WHERE id=$1 RETURNING *`,
+            [id]
+        )
+        return result.rows[0] || null
+    } catch (error) {
+        throw error
+    }
+}
