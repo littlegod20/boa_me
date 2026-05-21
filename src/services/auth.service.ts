@@ -80,6 +80,10 @@ export const loginUser = async (email:string, user_password:string) => {
             throw new AppError('Please verify your email before login.', 404)
         }
 
+        if (existingUser.google_id && !existingUser.password) {
+            throw new AppError('Please use Google to sign in', 400)
+        }
+
         const passwordMatch = await bcrypt.compare(user_password, existingUser.password as string)
 
         if (!passwordMatch){
