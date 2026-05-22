@@ -179,13 +179,11 @@ Table bookings {
 
     provider_service_id uuid [ref: > provider_services.id]
 
-    booking_date datetime
-
-    booking_time datetime
+    scheduled_at datetime
 
     booking_status booking_status
 
-    location varchar
+    customer_location varchar
 
     created_at datetime
 

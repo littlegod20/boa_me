@@ -29,7 +29,6 @@ export const getAllServices =  async(req:Request, res:Response) => {
     }
 
     const category = await findCategoryById(categoryId)
-    console.log('categories::', category)
 
     if(!category){
         throw new AppError('Category not found', 404)

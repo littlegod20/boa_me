@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { RegisterInput } from '../types/user.types'
+import { RegisterInput, Role } from '../types/user.types'
 import { generateVerificationToken } from '../utils/token.utils'
 import { createUser, findUserByEmail, findUserByForgotPasswordToken, findUserByVerificationToken, resetPassword, storeForgotPasswordToken, verifyUserEmail } from './user.service'
 import { AppError } from '../middlewares/errorHandler'
@@ -25,6 +25,7 @@ export const registerUser = async (user:RegisterInput)=>{
 
         await createUser({
             ...user,
+            role: user.role ?? Role.CUSTOMER,
             password: hashed_password,
             email_verification_token: email_token.token,
             email_verification_token_expires_at: email_token.expiry
