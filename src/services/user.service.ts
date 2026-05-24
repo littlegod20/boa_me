@@ -12,6 +12,16 @@ export const findUserByEmail = async (email:string): Promise<User|null> => {
     }
 }
 
+export const findUserById = async (user_id:string): Promise<User|null> => {
+    const pool = getPool()
+    try {
+        const result = await pool.query(`SELECT * FROM users WHERE id = $1`, [user_id])
+        return result.rows[0] || null
+    } catch (error) {
+        throw error
+    }
+}
+
 export const createUser = async (input: CreateUserInput): Promise<User>=>{
     const pool = getPool()
     try {

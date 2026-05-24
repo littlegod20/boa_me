@@ -1,7 +1,6 @@
 import { getPool } from "../config/database.config";
 import { Booking, BookingStatus, CreateBookingInput } from "../types/booking.types";
 import { QueryType } from "../types/pagination.types";
-import { Provider } from "../types/provider.types";
 
 
 export const insertBooking = async(bookingInput: CreateBookingInput): Promise<Booking | null> => {
@@ -20,7 +19,7 @@ export const insertBooking = async(bookingInput: CreateBookingInput): Promise<Bo
                 bookingInput.provider_service_id,
                 bookingInput.scheduled_at,
                 bookingInput.customer_location,
-                BookingStatus.PENDING
+                BookingStatus.PENDING_PAYMENT
             ]
         );
         return result.rows[0] || null;
@@ -36,6 +35,7 @@ export const findBookingById = async(bookingId: string): Promise<Booking | null>
             `SELECT 
                 bookings.*,
                 users.name as customer_name,
+                users.email as customer_email,
                 provider_services.price,
                 services.name as service_name,
                 provider_users.name as provider_name
@@ -115,7 +115,9 @@ export const updateBookingStatus = async (
         const result = await pool.query(
             `
             UPDATE bookings
-            SET booking_status = $1, updated_at = NOW()
+            SET booking_status = $1, 
+            updated_at = NOW(),
+            completed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE completed_at END
             WHERE id = $2
             RETURNING *
             `,
@@ -129,12 +131,47 @@ export const updateBookingStatus = async (
 
 
 export const isBookingProvider = async (bookingId: string, userId: string): Promise<boolean> => {
-    const pool = getPool()
-    const result = await pool.query(`
-        SELECT 1 FROM bookings
-        JOIN provider_services ON bookings.provider_service_id = provider_services.id
-        JOIN providers ON provider_services.provider_id = providers.id
-        WHERE bookings.id = $1 AND providers.user_id = $2
-    `, [bookingId, userId])
-    return (result.rowCount ?? 0) > 0
+    try {
+        const pool = getPool()
+        const result = await pool.query(`
+            SELECT 1 FROM bookings
+            JOIN provider_services ON bookings.provider_service_id = provider_services.id
+            JOIN providers ON provider_services.provider_id = providers.id
+            WHERE bookings.id = $1 AND providers.user_id = $2
+        `, [bookingId, userId])
+        return (result.rowCount ?? 0) > 0
+    } catch (error) {
+        console.error(error)
+        throw error
+    }
+}
+
+type PayoutBookings = Booking & { provider_user_id: string, payment_amount:number, payment_id:string };
+
+export const fetchEligiblePayouts = async ():Promise<PayoutBookings[]> =>{
+    try {
+        const pool = getPool()
+        const result = await pool.query(
+            `
+            SELECT 
+                bookings.*, 
+                payments.id as payment_id, 
+                payments.amount as payment_amount,
+                providers.user_id as provider_user_id
+            FROM bookings
+            LEFT JOIN transactions ON bookings.id = transactions.booking_id
+            LEFT JOIN payments ON bookings.id = payments.booking_id
+            LEFT JOIN provider_services ON  bookings.provider_service_id = provider_services.id
+            LEFT JOIN providers ON provider_services.provider_id = providers.id
+            WHERE bookings.booking_status = 'completed'
+            AND bookings.completed_at < NOW() - INTERVAL '24 hours'
+            AND transactions.id IS NULL
+            AND payments.payment_status = 'success'
+            `
+        )
+        return result.rows
+    } catch (error) {
+        console.error('fetchEligiblePayouts error:', error)
+        throw error
+    }
 }

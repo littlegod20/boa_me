@@ -216,15 +216,11 @@ Table reviews {
 
 
 Enum payment_status {
-
     pending
-
     success
-
     cancelled
-
     failed
-
+    refunded
 }
 
 Table payments {
@@ -278,6 +274,8 @@ Enum transaction_status {
 Table transactions {
 
     id uuid [pk]
+
+    booking_id uuid [ref: > bookings.id]
 
     customer_id uuid [ref: > users.id]
 

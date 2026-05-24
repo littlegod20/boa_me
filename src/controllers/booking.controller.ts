@@ -3,6 +3,11 @@ import { AppError } from "../middlewares/errorHandler";
 import { BookingStatus, CreateBookingInput } from "../types/booking.types";
 import { findBookingById, fetchBookings, updateBookingStatus, insertBooking, isBookingProvider } from "../services/booking.service";
 import { Role } from "../types/user.types";
+import { findPaymentByBookingId, insertPayment, updatePaymentStatus } from "../services/payment.service";
+import { CreatePaymentInput, PaymentStatus } from "../types/payment.types";
+import { initializePaystackPayment, refundPaystackPayment } from "../utils/paystack.utils";
+import { findProviderServiceById } from "../services/provider.service";
+import { CANCELLATION_FEE_RATE } from "../constants";
 
 
 export const createBooking = async (req:Request, res:Response) => {
@@ -17,6 +22,12 @@ export const createBooking = async (req:Request, res:Response) => {
         throw new AppError('Missing required fields: provider_service_id, scheduled_at, customer_location', 400)
     }
 
+    const providerService = await findProviderServiceById(provider_service_id)
+    
+    if(!providerService){
+        throw new AppError('Provider service not found!', 404)
+    }
+    
     const input:CreateBookingInput =  {
         customer_id: user.id,
         provider_service_id,
@@ -24,13 +35,47 @@ export const createBooking = async (req:Request, res:Response) => {
         customer_location
     }
 
-    const result = await insertBooking(input)
-
-    if(!result){
+    const booking = await insertBooking(input)
+    if(!booking){
         throw new AppError('Failed to book service', 500)
     }
+    
 
-    res.status(201).json({success:true, message:'Service booked successfully!'})
+    // generate paystack reference 
+    const paystackReference = `boame_${booking.id}_${Date.now()}`
+    const amount = providerService.price * 100
+
+    const paystack_initialize = await initializePaystackPayment(
+        user.email ?? '', 
+        amount, 
+        paystackReference,
+        'https://boame.app/payment/callback'
+    )
+
+
+    const paymentInput:CreatePaymentInput = {
+        customer_id: user.id,
+        booking_id: booking.id,
+        amount: providerService.price,
+        payment_date: new Date(),
+        paystack_reference:paystackReference
+    }
+
+    // create payment record
+    const payment = await insertPayment(paymentInput)
+
+    if(!payment){
+        throw new AppError('Failed to make payment', 500)
+    }
+
+    res.status(201).json({
+        success:true, 
+        message:'Service booked successfully!', 
+        data: {
+            booking,
+            authorization_url: paystack_initialize.data.authorization_url
+    }
+})
 }
 
 
@@ -110,9 +155,28 @@ export const changeBookingStatus = async (req: Request, res: Response) => {
         throw new AppError('Booking not found', 404)
     }
 
-    // check if the booking is for a customer or a provider
-    const isCustomer = booking.customer_id === user.id
+    // valid status transitions
+    const validTransitions: Record<BookingStatus, BookingStatus[]> = {
+        [BookingStatus.PENDING_PAYMENT]: [BookingStatus.CANCELLED],
+        [BookingStatus.PENDING_CONFIRMATION]: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
+        [BookingStatus.CONFIRMED]: [BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED],
+        [BookingStatus.IN_PROGRESS]: [BookingStatus.COMPLETED],
+        [BookingStatus.COMPLETED]: [],
+        [BookingStatus.CANCELLED]: []
+    }
+
+    // check if the transition is valid
+    const allowedNextStatuses = validTransitions[booking.booking_status]
+    if (!allowedNextStatuses.includes(booking_status)){
+        throw new AppError(
+            `Cannot transition from ${booking.booking_status} to ${booking_status}`,
+            400
+        )
+    }
+
+    const isCustomer = booking.customer_id === user.id  // check if this is the user booking the service
     const isAdmin = user.role === Role.ADMIN
+    const isProviderBooking = await isBookingProvider(id as string,user.id) // verify if this user is actually the provider of this booking
 
     // customer role can't update status to confirmed, inprogress or completed
     if(isCustomer && !isAdmin){
@@ -126,35 +190,54 @@ export const changeBookingStatus = async (req: Request, res: Response) => {
     }
 
     if (!isCustomer && !isAdmin) {
-        // verify that this user is actually the provider of this booking
-        const isProviderBooking = await isBookingProvider(id as string,user.id)
 
         if(!isProviderBooking){
             throw new AppError('You are not associated with this booking', 403)
         }
         
-        if (booking_status === BookingStatus.PENDING) {
+        if (booking_status === BookingStatus.PENDING_PAYMENT) {
             throw new AppError('Providers cannot set bookings back to pending', 403)
         }
     }
 
-    // valid status transitions
-    const validTransitions: Record<BookingStatus, BookingStatus[]> = {
-        [BookingStatus.PENDING]: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
-        [BookingStatus.CONFIRMED]: [BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED],
-        [BookingStatus.IN_PROGRESS]: [BookingStatus.COMPLETED],
-        [BookingStatus.COMPLETED]: [],
-        [BookingStatus.CANCELLED]: []
-    }
-    
+    if (booking_status === BookingStatus.CANCELLED) {
+        // check if payment exists and was successful
+        const payment = await findPaymentByBookingId(booking.id)
 
-    // check if the transition is valid
-    const allowedNextStatuses = validTransitions[booking.booking_status]
-    if (!allowedNextStatuses.includes(booking_status)){
-        throw new AppError(
-            `Cannot transition from ${booking.booking_status} to ${booking_status}`,
-            400
-        )
+        if (payment && payment.payment_status === PaymentStatus.SUCCESS) {
+
+            // trigger Paystack refund => if provider cancelled=full_refund else deduct refund
+            const deductable = payment.amount * CANCELLATION_FEE_RATE
+            let amount:number = 0
+
+            const isBookingConfirmed = booking.booking_status === BookingStatus.CONFIRMED
+            const isBookingPendingConfirm = booking.booking_status === BookingStatus.PENDING_CONFIRMATION
+
+            if(isBookingConfirmed){
+                amount = isCustomer ? (payment.amount - deductable)  : payment.amount
+            }
+
+            if (isBookingPendingConfirm){
+                amount = payment.amount
+            }
+
+            const refund = await refundPaystackPayment(payment.paystack_reference, amount)
+
+            if(!refund){
+                throw new AppError('Refund was unsuccessful', 500)
+            }
+
+            // update payment status
+           const update_payment_status =  await updatePaymentStatus(payment.paystack_reference, PaymentStatus.REFUNDED)
+
+           if (!update_payment_status){
+                throw new AppError('Payment status failed to update', 500)
+           }
+        } 
+
+        if (payment && payment.payment_status === PaymentStatus.PENDING){
+            await updatePaymentStatus(payment.paystack_reference, PaymentStatus.CANCELLED)
+        }
     }
 
     const updated = await updateBookingStatus(id as string, { booking_status });

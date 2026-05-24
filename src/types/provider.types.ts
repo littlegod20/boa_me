@@ -40,7 +40,7 @@ export interface ProviderService {
     id: string
     provider_id: string
     service_id: string
-    price?: number
+    price: number
     created_at?: string
     updated_at?: string
 }

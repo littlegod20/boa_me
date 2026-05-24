@@ -1,0 +1,93 @@
+import { getChannel } from "../config/rabbitmq.config"
+import { PLATFORM_COMMISSION_RATE } from "../constants"
+import { findProviderByUserId } from "../services/provider.service"
+import { insertTransaction } from "../services/transaction.service"
+import { findUserById } from "../services/user.service"
+import { PayoutJobPayload } from "../types/payout.types"
+import { TransactionStatus, TransactionType } from "../types/transaction.types"
+import { createPaystackTransferRecipient, initiatePaystackTransfer } from "../utils/paystack.utils"
+
+
+export const startPayoutWorker = async () => {
+    const channel = getChannel()
+
+    // assert queue exists
+    await channel.assertQueue('payout_queue', { durable:true })
+
+    console.log('Payout worker listening...')
+
+    // consume messages
+    channel.consume('payout_queue', async (msg) => {
+        if (!msg) return
+
+        try {
+            // parse payload
+            const payload: PayoutJobPayload = JSON.parse(msg.content.toString())
+
+            const provider = await findProviderByUserId(payload.provider_user_id)
+            if (!provider) throw new Error(`Provider not found: ${payload.provider_user_id}`)
+            
+            // check if provider has payout details
+            if (!provider.payout_method) throw new Error('Provider has no payout method')
+
+            const user = await findUserById(provider.user_id)
+
+            // calculate payout after commission
+            const commission = payload.amount * PLATFORM_COMMISSION_RATE
+            const payoutAmount = payload.amount - commission
+
+            const momoProviderCodeMap: Record<string, string> = {
+                'mtn': 'MTN',
+                'telecel': 'VOD',
+                'airtel_tigo': 'ATL'
+            }
+
+            const bank_code = momoProviderCodeMap[provider.momo_provider as string]
+            if (!bank_code) throw new Error(`Unknown momo provider: ${provider.momo_provider}`)
+
+            // recipient details based on payout method
+            const recipientCode = await createPaystackTransferRecipient({
+                type: 'mobile_money',
+                name: user?.name ?? 'Provider',
+                account_number: provider.momo_number!,
+                bank_code: bank_code,
+                currency: 'GHS'
+            })
+
+            // initiate transfer
+            await initiatePaystackTransfer({
+                source: 'balance',
+                amount: payoutAmount,
+                recipient: recipientCode,
+                reason: `Payout for booking ${payload.booking_id}`
+            })
+
+            await insertTransaction({
+                booking_id: payload.booking_id,
+                customer_id: payload.customer_id,
+                provider_id: provider.id,
+                payment_id: payload.payment_id,
+                amount: payoutAmount,
+                transaction_type: TransactionType.PAYOUT,
+                transaction_status: TransactionStatus.COMPLETED
+            })
+
+            console.log(`Payout processed for booking ${payload.booking_id}`)
+
+            // acknowledge -- telling rabbitmq this message was handled
+            channel.ack(msg)
+                
+        } catch (error:any) {
+            console.error('Payout worker error:', error?.response?.data?.message || error)
+    
+            // don't requeue if it's a business account limitation
+            if (error?.response?.data?.code === 'transfer_unavailable') {
+                console.log('Transfer unavailable — account upgrade required')
+                channel.ack(msg)  // acknowledge to remove from queue
+            } else {
+                channel.nack(msg, false, true)  // requeue for other errors
+            }
+        }
+    })
+
+}

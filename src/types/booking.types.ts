@@ -1,9 +1,10 @@
 export enum BookingStatus {
-    PENDING = 'pending',
+    PENDING_PAYMENT = 'pending_payment',
+    PENDING_CONFIRMATION = 'pending_confirmation',
     CONFIRMED = 'confirmed',
     CANCELLED = 'cancelled',
     IN_PROGRESS = 'in_progress',
-    COMPLETED ='completed'
+    COMPLETED = 'completed'
 }
 
 export interface Booking{
@@ -13,6 +14,11 @@ export interface Booking{
     scheduled_at:Date
     booking_status: BookingStatus
     customer_location:string
+    customer_name?:string
+    customer_email?:string 
+    price?:number
+    service_name?:string
+    provider_name?:string
     created_at:Date
     updated_at:Date
 }

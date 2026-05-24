@@ -17,7 +17,6 @@ export const fetchAllServices = async(categoryId:string | undefined, query:Query
 
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
 
-        
         const page = query.page || 1
         const limit = query.limit || 10
         const offset = (page - 1) * limit
