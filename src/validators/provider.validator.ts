@@ -31,21 +31,21 @@ export const registerProviderSchema = z.object({
     if (data.payout_method === PayoutMethod.BANK) {
         if (!data.bank_account_number) {
             ctx.addIssue({
-                code: z.ZodIssueCode.custom,
+                code: 'custom',
                 path: ['bank_account_number'],
                 message: 'Bank account number is required for bank payout'
             })
         }
         if (!data.bank_account_name) {
             ctx.addIssue({
-                code: z.ZodIssueCode.custom,
+                code: 'custom',
                 path: ['bank_account_name'],
                 message: 'Bank account name is required for bank payout'
             })
         }
         if (!data.bank_code) {
             ctx.addIssue({
-                code: z.ZodIssueCode.custom,
+                code: 'custom',
                 path: ['bank_code'],
                 message: 'Bank code is required for bank payout'
             })
