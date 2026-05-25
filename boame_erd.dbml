@@ -199,7 +199,7 @@ Table reviews {
 
     customer_id uuid [ref: > users.id, note: "Customer reviews the provider"]
 
-    provider_id uuid [ref: > providers.user_id, note: "Provider is reviewed by the customer"]
+    provider_user_id uuid [ref: > providers.user_id, note: "Provider is reviewed by the customer"]
 
     booking_id uuid [ref: > bookings.id]
 

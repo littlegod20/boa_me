@@ -19,6 +19,7 @@ export interface Booking{
     price?:number
     service_name?:string
     provider_name?:string
+    provider_user_id?:string
     created_at:Date
     updated_at:Date
 }
