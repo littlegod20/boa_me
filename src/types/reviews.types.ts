@@ -4,7 +4,7 @@ export interface Review{
     provider_user_id:string
     booking_id:string
     rating:number
-    comment:string
+    comment?:string
     created_at:Date
     updated_at:Date
 }
@@ -14,5 +14,5 @@ export type CreateReviewInput= {
     provider_user_id:string
     booking_id:string
     rating:number
-    comment:string
+    comment?:string
 }

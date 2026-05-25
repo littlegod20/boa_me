@@ -10,14 +10,16 @@ import {
     removeProviderService,
     registerAsProvider
 } from "../controllers/provider.controller";
+import { validate } from "../middlewares/validate.middleware";
+import { addProviderServiceSchema, registerProviderSchema } from "../validators/provider.validator";
 
 const router = Router()
 
 
 
-router.post('/register', authenticate, registerAsProvider)
+router.post('/register', authenticate, validate(registerProviderSchema), registerAsProvider)
 
-router.post('/', authenticate, createProviderService)
+router.post('/', authenticate,validate(addProviderServiceSchema), createProviderService)
 
 router.get('/service/:serviceId/providers', authenticate, getServiceProviders)
 
