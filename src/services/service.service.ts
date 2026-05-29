@@ -1,6 +1,9 @@
 import { getPool } from "../config/database.config"
+import { logger } from "../config/logger.config"
+import { CACHE_KEYS, CACHE_TTL } from "../constants"
 import { QueryType } from "../types/pagination.types"
 import { CreateService, Service, ServiceWithCategory } from "../types/services.types"
+import { deleteCache, deleteCachePattern, getCache, setCache } from "../utils/cache.utils"
 
 
 
@@ -23,6 +26,14 @@ export const fetchAllServices = async(categoryId:string | undefined, query:Query
         values.push(limit)
         values.push(offset)
 
+        // check cache
+        const cacheKey = CACHE_KEYS.SERVICES_ALL(`${categoryId || 'all'}_page${page}_limit${limit}`)
+        const cached = await getCache<ServiceWithCategory[]>(cacheKey)
+        if(cached){
+            logger.info('Services served from cache')
+            return cached
+        }
+
         const pool = getPool()
         const result = await pool.query(`
             SELECT
@@ -35,6 +46,10 @@ export const fetchAllServices = async(categoryId:string | undefined, query:Query
             LIMIT $${index++} OFFSET $${index++}
             `, values
         )
+
+        // set cache if no cache exists
+        await setCache(cacheKey, result.rows, CACHE_TTL.SERVICES)
+
         return result.rows || null
     } catch (error) {
         throw error
@@ -43,6 +58,11 @@ export const fetchAllServices = async(categoryId:string | undefined, query:Query
 
 export const findServiceById =  async (serviceId:string):Promise<ServiceWithCategory | null> => {
     try {
+        const cached = await getCache<ServiceWithCategory>(CACHE_KEYS.SERVICE_BY_ID(serviceId))
+        if(cached){
+            logger.info(`Service with id: ${serviceId} served from cache`)
+            return cached
+        }
         const pool = getPool()
         const result = await pool.query(`
             SELECT
@@ -54,7 +74,14 @@ export const findServiceById =  async (serviceId:string):Promise<ServiceWithCate
             WHERE services.id=$1`, 
             [serviceId]
         )
-        return result.rows[0] || null
+
+        const service = result.rows[0] || null
+        
+        if(service){
+            await setCache(CACHE_KEYS.SERVICE_BY_ID(serviceId), service, CACHE_TTL.SERVICES)
+        }
+
+        return service
     } catch (error) {
         throw error
     }
@@ -70,6 +97,8 @@ export const insertService =  async(input:CreateService):Promise<Service | null>
             `, 
             [input.name, input.image, input.description, input.category_id]
         )
+        await deleteCachePattern('services:all:*')
+
         return result.rows[0] || null
     } catch (error) {
         throw error
@@ -78,6 +107,9 @@ export const insertService =  async(input:CreateService):Promise<Service | null>
 
 export const modifyService = async(serviceId:string, update:CreateService):Promise<Service | null> => {
     try {
+        await deleteCachePattern('services:all:*')
+        await deleteCache(CACHE_KEYS.SERVICE_BY_ID(serviceId))
+
         let fields = []
         let values = []
         let index = 1
@@ -113,6 +145,9 @@ export const modifyService = async(serviceId:string, update:CreateService):Promi
             `
             
         const result = await pool.query(query, values)
+
+        await setCache(CACHE_KEYS.SERVICE_BY_ID(serviceId), result.rows[0], CACHE_TTL.SERVICES)
+
         return result.rows[0] || null
     } catch (error) {
         throw error
@@ -126,6 +161,8 @@ export const deleteService = async(serviceId:string):Promise<Service | null> => 
             `DELETE FROM services WHERE id=$1 RETURNING *`,
             [serviceId]
         )
+        await deleteCachePattern('services:all:*')
+        await deleteCache(CACHE_KEYS.SERVICE_BY_ID(serviceId))
         return result.rows[0] || null
     } catch (error) {
         throw error

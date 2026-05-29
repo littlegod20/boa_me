@@ -24,14 +24,8 @@ export const getAllServices =  async(req:Request, res:Response) => {
         limit: req.query.limit ? parseInt(req.query.limit as string) : 10
     }
     
-    if(!categoryId || typeof categoryId !=='string' || !uuidRegex.test(categoryId)){
+    if(categoryId  && (typeof categoryId !=='string' || !uuidRegex.test(categoryId))){
         throw new AppError('Invalid Category id', 400)
-    }
-
-    const category = await findCategoryById(categoryId)
-
-    if(!category){
-        throw new AppError('Category not found', 404)
     }
 
     const result = await fetchAllServices(categoryId, query )

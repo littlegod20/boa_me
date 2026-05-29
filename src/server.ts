@@ -8,6 +8,7 @@ import { startPayoutWorker } from './workers/payout.worker'
 import { startPayoutCronJob } from './jobs/payout.job'
 import { createServer } from 'http'
 import { initializeSocket } from './config/socket.config'
+import { connectRedis } from './config/redis.config'
 
 config()
 initializePassport()
@@ -23,6 +24,7 @@ const startServer = async () => {
     initializeSocket(httpServer)
 
     await connectDB()
+    await connectRedis()
     await connectRabbitMQ()
     await startPayoutWorker()
     startPayoutCronJob()

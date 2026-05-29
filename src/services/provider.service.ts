@@ -1,7 +1,9 @@
 import { getPool } from "../config/database.config"
 import { logger } from "../config/logger.config"
+import { CACHE_KEYS, CACHE_TTL } from "../constants"
 import { QueryType } from "../types/pagination.types"
 import { CreateProvider, CreateProviderService, Provider, ProviderService } from "../types/provider.types"
+import { deleteCache, getCache, setCache } from "../utils/cache.utils"
 
 // ------------------------------------------------
 // provider
@@ -128,6 +130,7 @@ export const insertProviderService = async (provider_id:string, provider_service
                 provider_service.price
             ]
         )
+        await deleteCache(CACHE_KEYS.SERVICE_PROVIDERS(provider_service.service_id))
         return result.rows[0] || null
     } catch (error) {
         throw error
@@ -180,6 +183,13 @@ export const fetchProviderServices = async(provider_id:string, query:QueryType):
 
 export const fetchServiceProviders = async(service_id:string):Promise<Provider[] | null> =>{
     try {
+        const cacheKey = CACHE_KEYS.SERVICE_PROVIDERS(service_id)
+        const cached = await getCache<Provider[]>(cacheKey)
+        if (cached) {
+            logger.info(`Providers for service ${service_id} served from cache`)
+            return cached
+        }
+
         const pool = getPool()
         const result = await pool.query(
             `
@@ -200,14 +210,17 @@ export const fetchServiceProviders = async(service_id:string):Promise<Provider[]
             `,
             [service_id]
         )
-        return result.rows || null
+        const providers = result.rows || []
+        await setCache(cacheKey, providers, CACHE_TTL.PROVIDER_SERVICES)
+        return providers
     } catch (error) {
         throw error
     }
 }
 
-export const modifyProviderService = async(provider_service_id:string, update:CreateProviderService):Promise<ProviderService | null> => {
+export const modifyProviderService = async(provider_service_id:string, service_id:string, update:CreateProviderService):Promise<ProviderService | null> => {
     try {
+        await deleteCache(CACHE_KEYS.SERVICE_PROVIDERS(service_id))
         const pool = getPool()
 
         const fields = []
@@ -245,7 +258,13 @@ export const modifyProviderService = async(provider_service_id:string, update:Cr
             RETURNING *`
 
         const result = await pool.query(query,values)
-        return result.rows[0] || null
+        const updated = result.rows[0] || null
+
+        if (updated) {
+            await deleteCache(CACHE_KEYS.SERVICE_PROVIDERS(provider_service_id))
+        }
+
+        return updated
     } catch (error) {
         throw error
     }
@@ -258,6 +277,9 @@ export const deleteProviderService = async(provider_service_id:string):Promise<P
             `DELETE FROM provider_services WHERE id=$1 RETURNING *`,
             [provider_service_id]
         )
+        
+        await deleteCache(CACHE_KEYS.SERVICE_PROVIDERS(provider_service_id))
+    
         return result.rows[0] || null
     } catch (error) {
         throw error

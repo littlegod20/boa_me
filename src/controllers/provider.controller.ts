@@ -107,15 +107,18 @@ export const updateProviderService = async (req: Request, res: Response) => {
         throw new AppError('Invalid id!', 400)
     }
 
-    const updatedProviderService = await modifyProviderService(providerServiceId, updateData)
+    const existing = await findProviderServiceById(providerServiceId)
+    if (!existing) throw new AppError('Provider service not found', 404)
 
-    if (!updatedProviderService) {
-        throw new AppError('Provider service not found', 404)
-    }
+    const updated = await modifyProviderService(
+        providerServiceId, 
+        existing.service_id,
+        updateData
+    )
 
     res.status(200).json({
         success: true,
-        data: updatedProviderService
+        data: updated
     })
 }
 

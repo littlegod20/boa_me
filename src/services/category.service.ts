@@ -1,10 +1,12 @@
 import { getPool } from "../config/database.config"
 import { logger } from "../config/logger.config"
+import { CACHE_KEYS, CACHE_TTL } from "../constants"
 import { Category, CreateCategory } from "../types/category.types"
+import { deleteCache, getCache, setCache } from "../utils/cache.utils"
 
 
 export const insertCategory = async(input:CreateCategory):Promise<Category | null> =>{
-    try {
+    try { 
         const pool = getPool()
         const result = await pool.query(`
             INSERT INTO categories (name, description)
@@ -15,6 +17,10 @@ export const insertCategory = async(input:CreateCategory):Promise<Category | nul
                 input.description
             ]
         )
+
+        // invalidate cache
+        await deleteCache(CACHE_KEYS.CATEGORIES_ALL)
+        
         return result.rows[0] || null
         
     } catch (error) {
@@ -24,9 +30,21 @@ export const insertCategory = async(input:CreateCategory):Promise<Category | nul
 
 export const findCategoryById = async(id:string):Promise<Category | null> => {
     try {
+        const cached = await getCache<Category>(CACHE_KEYS.CATEGORY_BY_ID(id))
+        if (cached){
+            logger.info(`Category with id ${id} served from cache`)
+            return cached
+        }
         const pool = getPool()
         const result = await pool.query(`SELECT * FROM categories WHERE id=$1`,[id])
-        return result.rows[0] || null
+
+        const category = result.rows[0] || null
+
+        if(category){
+            await setCache(CACHE_KEYS.CATEGORY_BY_ID(id), category, CACHE_TTL.CATEGORIES)
+        }
+
+        return category
     } catch (error) {
         logger.error('findCategoryById error', { error })
         throw error
@@ -35,8 +53,18 @@ export const findCategoryById = async(id:string):Promise<Category | null> => {
 
 export const fetchAllCategories = async():Promise<Category[] | null> => {
     try {
+         // check cache first
+         const cached = await getCache<Category[]>(CACHE_KEYS.CATEGORIES_ALL)
+         if (cached) {
+             logger.info('Categories served from cache')
+             return cached
+         }
+
         const pool = getPool()
         const result = await pool.query(`SELECT * FROM categories`)
+
+        await setCache(CACHE_KEYS.CATEGORIES_ALL, result.rows, CACHE_TTL.CATEGORIES)
+
         return result.rows || null
     } catch (error) {
         throw error
@@ -46,6 +74,9 @@ export const fetchAllCategories = async():Promise<Category[] | null> => {
 
 export const modifyCategory = async(id:string, update:CreateCategory):Promise<Category | null> => {
     try {
+        await deleteCache(CACHE_KEYS.CATEGORIES_ALL)
+        await deleteCache(CACHE_KEYS.CATEGORY_BY_ID(id))
+
         const pool = getPool()
 
         const fields = []
@@ -76,6 +107,9 @@ export const modifyCategory = async(id:string, update:CreateCategory):Promise<Ca
             RETURNING *`
 
         const result = await pool.query(query,values)
+
+        await setCache(CACHE_KEYS.CATEGORY_BY_ID(id), result.rows[0], CACHE_TTL.CATEGORIES)
+
         return result.rows[0] || null
     } catch (error) {
         throw error
@@ -89,6 +123,10 @@ export const deleteCategory = async(id:string):Promise<Category | null> => {
             `DELETE FROM categories WHERE id=$1 RETURNING *`,
             [id]
         )
+
+        await deleteCache(CACHE_KEYS.CATEGORIES_ALL)
+        await deleteCache(CACHE_KEYS.CATEGORY_BY_ID(id))
+
         return result.rows[0] || null
     } catch (error) {
         throw error
