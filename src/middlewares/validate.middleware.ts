@@ -1,26 +1,30 @@
 import { Request, Response, NextFunction } from 'express'
-import { ZodType } from 'zod'
+import { ZodError, ZodType } from 'zod'
 
-export const validate = (schema: ZodType) => {
+const formatValidationErrors = (error: ZodError<unknown>) =>
+    error.issues.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+    }))
+
+const validateSource = (source: 'body' | 'query' | 'params') => (schema: ZodType) => {
     return (req: Request, res: Response, next: NextFunction) => {
-        const result = schema.safeParse(req.body)
-        
-        if (!result.success) {
-            const errors = result.error.issues.map(err => ({
-                field: err.path.join('.'),
-                message: err.message
-            }))
+        const result = schema.safeParse(req[source])
 
-            // return all validation errors at once
+        if (!result.success) {
             res.status(400).json({
                 success: false,
                 message: 'Validation failed',
-                errors
+                errors: formatValidationErrors(result.error),
             })
             return
         }
-        
-        req.body = result.data 
+
+        req[source] = result.data
         next()
     }
 }
+
+export const validate = validateSource('body')
+export const validateQuery = validateSource('query')
+export const validateParams = validateSource('params')

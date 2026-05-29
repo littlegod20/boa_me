@@ -3,17 +3,14 @@ import { AppError } from "../middlewares/errorHandler";
 import { findBookingById } from "../services/booking.service";
 import { fetchMessages, fetchUserConversations, findConversationById, findConversationsBetweenUsers, insertConversation } from "../services/conversation.service";
 import { Booking } from "../types/booking.types";
+import type { ConversationIdParamSchema, PaginationQuerySchema } from "../validators/conversation.validator";
 
 
 export const createConversation = async(req:Request, res:Response) => {
     const user = req.user
-    const {booking_id, provider_id} = req.body
+    const { booking_id, provider_id } = req.body
     
     if(!user) throw new AppError('Unauthenticated', 401)
-
-    if (!provider_id){
-        throw new AppError('Missing provider id', 400)
-    }
 
     let existingBooking:Booking | null
 
@@ -46,44 +43,29 @@ export const createConversation = async(req:Request, res:Response) => {
 
 export const getUserConversations = async(req:Request, res:Response) => {
     const user = req.user
-    const {limit, page} = req.query
+    const { limit, page } = req.query as unknown as PaginationQuerySchema
     if (!user) throw new AppError('Unauthorized', 401)
 
-    const query = {
-        limit: parseInt(limit as string, 10),
-        page: parseInt(page as string, 10)
-    }
-
-    
-    const convos = await fetchUserConversations(query, user.id)
+    const convos = await fetchUserConversations({ limit, page }, user.id)
 
     res.status(200).json({success:true, message:'User conversations fetched successfully', data:convos})
 }
 
 export const getConversationMessages = async(req:Request, res:Response) => {
-    const {conversationId} = req.params
-    const {page, limit} = req.query
+    const { conversationId } = req.params as unknown as ConversationIdParamSchema
+    const { page, limit } = req.query as unknown as PaginationQuerySchema
     const user = req.user
 
     if(!user) throw new AppError('Unauthenticated', 401)
 
-    if(!conversationId){
-        throw new AppError('Missing conversation id', 400)
-    }
-
-    const conversation = await findConversationById(conversationId as string)
+    const conversation = await findConversationById(conversationId)
     if (!conversation) throw new AppError('Conversation not found', 404)
     
     if (conversation.customer_id !== user.id && conversation.provider_id !== user.id) {
         throw new AppError('You are not part of this conversation', 403)
     }
     
-    const query = {
-        limit: parseInt(limit as string, 10),
-        page: parseInt(page as string, 10)
-    }
-
-    const convoMessages = await fetchMessages(query, conversationId as string)
+    const convoMessages = await fetchMessages({ limit, page }, conversationId)
 
     res.status(200).json({success:true, message:'Conversation messages fetched successfully', data:convoMessages})
 } 
