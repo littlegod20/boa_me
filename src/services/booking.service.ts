@@ -1,4 +1,5 @@
 import { getPool } from "../config/database.config";
+import { logger } from "../config/logger.config";
 import { Booking, BookingStatus, CreateBookingInput } from "../types/booking.types";
 import { QueryType } from "../types/pagination.types";
 
@@ -142,7 +143,7 @@ export const isBookingProvider = async (bookingId: string, userId: string): Prom
         `, [bookingId, userId])
         return (result.rowCount ?? 0) > 0
     } catch (error) {
-        console.error(error)
+        logger.error('booking ownership check error', { error })
         throw error
     }
 }
@@ -172,7 +173,7 @@ export const fetchEligiblePayouts = async ():Promise<PayoutBookings[]> =>{
         )
         return result.rows
     } catch (error) {
-        console.error('fetchEligiblePayouts error:', error)
+        logger.error('fetchEligiblePayouts error', { error })
         throw error
     }
 }

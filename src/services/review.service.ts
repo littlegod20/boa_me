@@ -1,4 +1,5 @@
 import { getPool } from "../config/database.config";
+import { logger } from "../config/logger.config";
 import { QueryType } from "../types/pagination.types";
 import { CreateReviewInput, Review } from "../types/reviews.types";
 
@@ -22,7 +23,7 @@ export const insertReview = async (reviewInput:CreateReviewInput):Promise<Review
         )
         return result.rows[0] || null
     } catch (error) {
-        console.error('insertReview error: ', error)
+        logger.error('insertReview error', { error })
         throw error   
     }
 }
@@ -33,7 +34,7 @@ export const findReviewByBookingId = async (booking_id:string):Promise<Review | 
         const result = await pool.query(`SELECT * FROM reviews WHERE booking_id = $1`, [booking_id])
         return result.rows[0] || null
     } catch (error) {
-        console.error('findReviewByBookingId error: ', error)
+        logger.error('findReviewByBookingId error', { error })
         throw error  
     }
 }
@@ -76,7 +77,7 @@ export const fetchReviews = async ( query:QueryType, customer_id?:string, provid
 
         return result.rows
     } catch (error) {
-        console.error('fetchCustomerReviews error: ', error)
+        logger.error('fetchCustomerReviews error', { error })
         throw error  
     }
 }

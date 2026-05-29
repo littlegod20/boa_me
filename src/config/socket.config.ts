@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
+import { logger } from "./logger.config";
 import { verifyToken } from "../utils/jwt.utils";
 import { fetchUserConversations } from "../services/conversation.service";
 import { insertMessage } from "../services/conversation.service";
@@ -34,7 +35,7 @@ export const initializeSocket = (httpServer:HttpServer) => {
 
     io.on('connect', async(socket)=>{
         const user = socket.data.user
-        console.log(`User connected: ${user.id}`)
+        logger.info(`User connected: ${user.id}`)
 
         // join all conversation rooms
         const conversations = await fetchUserConversations(
@@ -44,11 +45,11 @@ export const initializeSocket = (httpServer:HttpServer) => {
         conversations.forEach(convo => {
             socket.join(`conversation_${convo.id}`)
         })
-        console.log(`User ${user.id} joined ${conversations.length} conversation rooms`)
+        logger.info(`User ${user.id} joined ${conversations.length} conversation rooms`)
 
         // handle send_message event
         socket.on('send_message', async (data)=>{
-            console.log('send_message:', data)
+            logger.debug('send_message', { data })
             try {
                 const {conversation_id, content} = data
 
@@ -67,7 +68,7 @@ export const initializeSocket = (httpServer:HttpServer) => {
                 // emit to everyone in the conversation room including sender
                 io.to(`conversation_${conversation_id}`).emit('new_message', message)
             } catch (error) {
-                console.error('send_message error:', error)
+                logger.error('send_message error', { error })
                 socket.emit('error', {message: 'Failed to send message'})
             }
         })
@@ -85,7 +86,7 @@ export const initializeSocket = (httpServer:HttpServer) => {
 
         // handle socket disconnect
         socket.on('disconnect', ()=>{
-            console.log(`User disconnected: ${user.id}`)
+            logger.info(`User disconnected: ${user.id}`)
         })
     })
 

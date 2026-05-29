@@ -1,4 +1,5 @@
 import axios from "axios"
+import { logger } from "../config/logger.config"
 import { AppError } from "../middlewares/errorHandler"
 import { InitiateTransfer, PaystackInitialize, TransferRecipient } from "../types/paystack.types"
 
@@ -57,7 +58,7 @@ export const refundPaystackPayment = async (reference: string, amount: number) =
         )
         return refund.data
     } catch (error) {
-        console.error(error)
+        logger.error('refundPaystackPayment error', { error })
         throw error
     }
 }
@@ -80,7 +81,7 @@ export const createPaystackTransferRecipient = async (recipient:TransferRecipien
             })
         return transfer.data.data.recipient_code
     } catch (error) {
-        console.log(error)
+        logger.error('createPaystackTransferRecipient error', { error })
         throw error
     }
 }
@@ -102,7 +103,7 @@ export const initiatePaystackTransfer = async (transfer:InitiateTransfer) => {
 
         return result.data
     } catch(error){
-        console.error(error)
+        logger.error('initiatePaystackTransfer error', { error })
         throw error
     }
 }

@@ -1,4 +1,5 @@
 import {config} from 'dotenv'
+import { logger } from './config/logger.config'
 import { createApp } from "./app"
 import { connectDB } from './config/database.config'
 import { initializePassport } from './config/passport.config'
@@ -27,7 +28,7 @@ const startServer = async () => {
     startPayoutCronJob()
 
     httpServer.listen(port, ()=> {
-        console.log(`Port listening on ${port}`)
+        logger.info(`Port listening on ${port}`)
     })
 }
 

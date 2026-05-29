@@ -1,4 +1,5 @@
 import { getPool } from "../config/database.config"
+import { logger } from "../config/logger.config"
 import { QueryType } from "../types/pagination.types"
 import { CreateProvider, CreateProviderService, Provider, ProviderService } from "../types/provider.types"
 
@@ -139,7 +140,7 @@ export const findProviderServiceById = async(provider_service_id:string):Promise
         const result = await pool.query(`SELECT * FROM provider_services WHERE id=$1`,[provider_service_id])
         return result.rows[0] || null
     } catch (error) {
-        console.error('findProviderServiceById error:', error)
+        logger.error('findProviderServiceById error', { error })
         throw error
     }
 }

@@ -1,3 +1,4 @@
+import { logger } from "../config/logger.config"
 import { getChannel } from "../config/rabbitmq.config"
 import { PLATFORM_COMMISSION_RATE } from "../constants"
 import { findProviderByUserId } from "../services/provider.service"
@@ -14,7 +15,7 @@ export const startPayoutWorker = async () => {
     // assert queue exists
     await channel.assertQueue('payout_queue', { durable:true })
 
-    console.log('Payout worker listening...')
+    logger.info('Payout worker listening...')
 
     // consume messages
     channel.consume('payout_queue', async (msg) => {
@@ -72,17 +73,17 @@ export const startPayoutWorker = async () => {
                 transaction_status: TransactionStatus.COMPLETED
             })
 
-            console.log(`Payout processed for booking ${payload.booking_id}`)
+            logger.info(`Payout processed for booking ${payload.booking_id}`)
 
             // acknowledge -- telling rabbitmq this message was handled
             channel.ack(msg)
                 
         } catch (error:any) {
-            console.error('Payout worker error:', error?.response?.data?.message || error)
+            logger.error('Payout worker error', { error: error?.response?.data?.message || error })
     
             // don't requeue if it's a business account limitation
             if (error?.response?.data?.code === 'transfer_unavailable') {
-                console.log('Transfer unavailable — account upgrade required')
+                logger.warn('Transfer unavailable — account upgrade required')
                 channel.ack(msg)  // acknowledge to remove from queue
             } else {
                 channel.nack(msg, false, false)  // requeue for other errors

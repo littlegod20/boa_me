@@ -6,12 +6,15 @@ import appRoutes from './routes/index'
 import passport from "passport"
 import './config/passport.config'
 import { generalLimiter } from "./config/rateLimit.config"
+import { morganMiddleware } from "./middlewares/morgan.middleware"
 
 
 
 export const createApp = () => {
     const app = express()
-
+    
+    app.set('trust proxy', 1) // this helps morgan's ':remote-addr' format show real client IP even behind proxy like Nginx or Cloudflare
+    
     app.use(
         '/api/v1/payments/webhook',
         express.raw({ type: 'application/json' })
@@ -21,6 +24,7 @@ export const createApp = () => {
     app.use(helmet())
 
     app.use(generalLimiter)
+    app.use(morganMiddleware)
 
     app.use(passport.initialize())
 

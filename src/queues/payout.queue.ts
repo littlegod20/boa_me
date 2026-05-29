@@ -1,3 +1,4 @@
+import { logger } from "../config/logger.config"
 import { getChannel } from "../config/rabbitmq.config"
 import { PayoutJobPayload } from "../types/payout.types"
 
@@ -9,5 +10,5 @@ export const publishPayoutJob = async (payload: PayoutJobPayload) => {
         Buffer.from(JSON.stringify(payload)),
         { persistent: true }  // message survives RabbitMQ restart
     )
-    console.log('Payout job published:', payload.booking_id)
+    logger.info('Payout job published', { booking_id: payload.booking_id })
 }

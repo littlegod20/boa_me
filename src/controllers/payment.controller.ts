@@ -1,4 +1,5 @@
 import { Request, Response } from "express"
+import { logger } from "../config/logger.config"
 import { AppError } from "../middlewares/errorHandler"
 import { findPaymentByBookingId, findPaymentByReference, insertPayment, updatePaymentStatus } from "../services/payment.service"
 import { initializePaystackPayment, verifyPaystackPayment } from "../utils/paystack.utils"
@@ -114,7 +115,7 @@ export const webhookHandler = async (req:Request, res:Response)=>{
 
     if (event === 'refund.processed') {
         // data.transaction_reference is the original payment reference
-        console.log('Refund processed for:', data.transaction_reference)
+        logger.info('Refund processed', { transaction_reference: data.transaction_reference })
         // optionally notify the customer via push notification
     }
 

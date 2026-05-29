@@ -1,4 +1,5 @@
 import { Pool } from "pg"
+import { logger } from "./logger.config"
 
 
 let pool: Pool | undefined
@@ -9,9 +10,9 @@ export const connectDB = async () => {
     })
     try{
         await pool.connect()
-        console.log('Database connected successfully')
+        logger.info('Database connected successfully')
     } catch(error){
-        console.error(`Database connection error: ${error}`)
+        logger.error('Database connection error', { error })
         process.exit(1)
     }
 }

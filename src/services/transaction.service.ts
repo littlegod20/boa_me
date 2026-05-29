@@ -1,4 +1,5 @@
 import { getPool } from "../config/database.config"
+import { logger } from "../config/logger.config"
 import { CreateTransaction, Transaction } from "../types/transaction.types"
 
 
@@ -23,7 +24,7 @@ export const insertTransaction = async (input:CreateTransaction):Promise<Transac
         )
         return result.rows[0] || null
     } catch (error) {
-        console.error('insert transaction error:', error)
+        logger.error('insert transaction error', { error })
         throw error
     }
 }
@@ -35,7 +36,7 @@ export const findTransactionByBookingId = async(booking_id:string):Promise<Trans
         const result = await pool.query(`SELECT * FROM transactions WHERE booking_id = $1`, [booking_id])
         return result.rows[0] || null 
     } catch (error) {
-        console.error('findTransactionByBookingId error:', error)
+        logger.error('findTransactionByBookingId error', { error })
         throw error
     }
 }

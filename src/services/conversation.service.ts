@@ -1,4 +1,5 @@
 import { getPool } from "../config/database.config";
+import { logger } from "../config/logger.config";
 import { Conversation, CreateConversationInput, CreateMessageInput, Message } from "../types/conversation.types";
 import { QueryType } from "../types/pagination.types";
 
@@ -21,7 +22,7 @@ export const insertConversation = async (conversationInput:CreateConversationInp
 
         return result.rows[0] || null
     } catch (error) {
-        console.error('insertConversation error: ', error)
+        logger.error('insertConversation error', { error })
         throw error
     }
 }
@@ -36,7 +37,7 @@ export const findConversationById = async (conversationId:string):Promise<Conver
         )
         return result.rows[0] || null
     } catch (error) {
-        console.error('findConversationById error:', error)
+        logger.error('findConversationById error', { error })
         throw error
     }
 }
@@ -51,7 +52,7 @@ export const findConversationByBookingId = async(bookingId:string):Promise<Conve
         )
         return result.rows[0] || null
     } catch (error) {
-        console.error('findConversationByBookingId error:', error)
+        logger.error('findConversationByBookingId error', { error })
         throw error
     }
 }
@@ -66,7 +67,7 @@ export const findConversationsBetweenUsers = async(customerId:string, providerId
         )
         return result.rows
     } catch (error) {
-        console.error('findConversationsBetweenUsers error:', error)
+        logger.error('findConversationsBetweenUsers error', { error })
         throw error
     }
 }
@@ -88,7 +89,7 @@ export const fetchUserConversations = async(query:QueryType, userId:string):Prom
         )
         return result.rows
     } catch (error) {
-        console.error('fetchUserConversations error:', error)
+        logger.error('fetchUserConversations error', { error })
         throw error
     }
 }
@@ -111,7 +112,7 @@ export const insertMessage = async(messageInput:CreateMessageInput):Promise<Mess
         )
         return result.rows[0] || null
     } catch (error) {
-        console.error('insertMessage error:', error)
+        logger.error('insertMessage error', { error })
         throw error
     }
 }
@@ -148,7 +149,7 @@ export const fetchMessages = async(query:QueryType, conversationId?:string):Prom
         )
         return result.rows || null
     } catch (error) {
-        console.error('fetchMessages error:', error)
+        logger.error('fetchMessages error', { error })
         throw error
     }
 }

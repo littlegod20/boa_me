@@ -1,4 +1,5 @@
 import { getPool } from "../config/database.config"
+import { logger } from "../config/logger.config"
 import { Category, CreateCategory } from "../types/category.types"
 
 
@@ -27,7 +28,7 @@ export const findCategoryById = async(id:string):Promise<Category | null> => {
         const result = await pool.query(`SELECT * FROM categories WHERE id=$1`,[id])
         return result.rows[0] || null
     } catch (error) {
-        console.error('findCategoryById error:', error)
+        logger.error('findCategoryById error', { error })
         throw error
     }
 }

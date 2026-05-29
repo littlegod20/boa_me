@@ -1,13 +1,14 @@
 import cron from 'node-cron'
+import { logger } from '../config/logger.config'
 import { publishPayoutJob } from '../queues/payout.queue'
 import { fetchEligiblePayouts } from '../services/booking.service'
 
 export const startPayoutCronJob = () => {
     cron.schedule('0 * * * *', async ()=>{
-        console.log('Running payout cron job...')
+        logger.info('Running payout cron job...')
         try {
                 const eligibleBookings = await fetchEligiblePayouts()
-                console.log(`Found ${eligibleBookings.length} eligible payouts`)
+                logger.info(`Found ${eligibleBookings.length} eligible payouts`)
 
                 for (const booking of eligibleBookings) {
                     await publishPayoutJob({
@@ -19,9 +20,9 @@ export const startPayoutCronJob = () => {
                     })
                 }
             } catch (error) {
-                console.error('Payout cron job error:', error)
+                logger.error('Payout cron job error', { error })
                 throw error
             }
     })
-    console.log('Payout cron job scheduled')
+    logger.info('Payout cron job scheduled')
 }
