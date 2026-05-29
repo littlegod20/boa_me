@@ -285,6 +285,17 @@ src/
 
 ---
 
+## Planned Features
+
+- **Dispute Resolution** — customers can flag unsatisfactory completed bookings for admin review. Admins can investigate, resolve or reject disputes, with optional compensation flow.
+- **Push Notifications** — Expo Push Notifications for booking confirmations, status updates, payment receipts and new messages via Firebase Cloud Messaging.
+- **Image Uploads** — provider profile photos and ID verification documents uploaded directly to Cloudinary from the React Native client using unsigned upload presets.
+- **Admin Dashboard** — web-based dashboard for managing users, services, disputes, and viewing platform analytics.
+- **Apple OAuth** — Sign in with Apple alongside existing Google OAuth.
+- **React Native Frontend** — mobile app for iOS and Android built with Expo.
+
+
+
 ## What I Learned
 
 This project pushed me significantly beyond CRUD. The most valuable lessons:
