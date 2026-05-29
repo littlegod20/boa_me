@@ -5,6 +5,7 @@ import { errorHandler } from "./middlewares/errorHandler"
 import appRoutes from './routes/index'
 import passport from "passport"
 import './config/passport.config'
+import { generalLimiter } from "./config/rateLimit.config"
 
 
 
@@ -18,6 +19,9 @@ export const createApp = () => {
     app.use(express.json())
     app.use(cors())
     app.use(helmet())
+
+    app.use(generalLimiter)
+
     app.use(passport.initialize())
 
     app.get('/health' ,(req, res)=> {

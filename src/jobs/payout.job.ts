@@ -2,8 +2,8 @@ import cron from 'node-cron'
 import { publishPayoutJob } from '../queues/payout.queue'
 import { fetchEligiblePayouts } from '../services/booking.service'
 
-export const startPayoutCronJob = async () => {
-    cron.schedule('* * * * *', async ()=>{
+export const startPayoutCronJob = () => {
+    cron.schedule('0 * * * *', async ()=>{
         console.log('Running payout cron job...')
         try {
                 const eligibleBookings = await fetchEligiblePayouts()

@@ -5,19 +5,28 @@ import { initializePassport } from './config/passport.config'
 import { connectRabbitMQ } from './config/rabbitmq.config'
 import { startPayoutWorker } from './workers/payout.worker'
 import { startPayoutCronJob } from './jobs/payout.job'
+import { createServer } from 'http'
+import { initializeSocket } from './config/socket.config'
 
 config()
 initializePassport()
 
 const startServer = async () => {
     const port = process.env.PORT || 3000
-    const server = createApp()
+    const app = createApp()
+
+    // create HTTP server from Express app
+    const httpServer = createServer(app)
+
+    // attach Socket.io to HTTP server
+    initializeSocket(httpServer)
+
     await connectDB()
     await connectRabbitMQ()
     await startPayoutWorker()
-    await startPayoutCronJob()
+    startPayoutCronJob()
 
-    server.listen(port, ()=> {
+    httpServer.listen(port, ()=> {
         console.log(`Port listening on ${port}`)
     })
 }

@@ -85,7 +85,7 @@ export const startPayoutWorker = async () => {
                 console.log('Transfer unavailable — account upgrade required')
                 channel.ack(msg)  // acknowledge to remove from queue
             } else {
-                channel.nack(msg, false, true)  // requeue for other errors
+                channel.nack(msg, false, false)  // requeue for other errors
             }
         }
     })

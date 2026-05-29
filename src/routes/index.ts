@@ -6,6 +6,7 @@ import providerServiceRouter from './provider.routes'
 import bookingRouter from './booking.routes'
 import paymentRouter from './payment.routes'
 import reviewRouter from './review.routes'
+import conversationRouter from './conversation.routes'
 
 
 const router = Router()
@@ -16,5 +17,6 @@ router.use('/providers', providerServiceRouter)
 router.use('/bookings', bookingRouter)
 router.use('/payments', paymentRouter)
 router.use('/reviews', reviewRouter)
+router.use('/conversations', conversationRouter)
 
 export default router
