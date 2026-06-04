@@ -29,8 +29,8 @@ const startServer = async () => {
     await startPayoutWorker()
     startPayoutCronJob()
 
-    httpServer.listen(port, ()=> {
-        logger.info(`Port listening on ${port}`)
+    httpServer.listen(Number(port), '0.0.0.0', ()=> {
+        logger.info(`Server is running on port ${Number(port)}`)
     })
 }
 
