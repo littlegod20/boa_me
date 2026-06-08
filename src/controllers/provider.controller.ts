@@ -8,7 +8,8 @@ import {
     fetchServiceProviders,
     modifyProviderService,
     findProviderByUserId,
-    findProviderServiceById
+    findProviderServiceById,
+    findProviderServiceByIdWithProviderDetails
 } from "../services/provider.service"
 import { QueryType } from "../types/pagination.types"
 import { CreateProvider, CreateProviderService, PayoutMethod } from "../types/provider.types"
@@ -51,7 +52,7 @@ export const getProviderServiceById = async (req: Request, res: Response) => {
         throw new AppError('Invalid id!', 400)
     }
 
-    const providerService = await findProviderServiceById(providerServiceId)
+    const providerService = await findProviderServiceByIdWithProviderDetails(providerServiceId)
 
     if (!providerService) {
         throw new AppError('Provider service not found', 404)
@@ -100,6 +101,16 @@ export const getServiceProviders = async (req: Request, res: Response) => {
 
 // Update a Provider Service
 export const updateProviderService = async (req: Request, res: Response) => {
+    if(!req.user){
+        throw new AppError('Unauthorized!', 401)
+    }
+
+    const provider = await findProviderByUserId(req.user.id)
+
+    if(!provider){
+        throw new AppError('Provider not found', 404)
+    }
+
     const { providerServiceId } = req.params
     const updateData: CreateProviderService = req.body
 
@@ -109,6 +120,11 @@ export const updateProviderService = async (req: Request, res: Response) => {
 
     const existing = await findProviderServiceById(providerServiceId)
     if (!existing) throw new AppError('Provider service not found', 404)
+
+    // check if the provider is the owner of the service
+    if(existing.provider_id !== provider.id){
+        throw new AppError('Unauthorized!', 401)
+    }
 
     const updated = await modifyProviderService(
         providerServiceId, 

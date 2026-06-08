@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { authenticate } from "../middlewares/auth.middleware";
-import { isAdmin } from "../middlewares/role.middleware";
 import { 
     createProviderService, 
     getProviderServiceById, 
@@ -27,8 +26,8 @@ router.get('/:providerServiceId', authenticate, getProviderServiceById)
 
 router.get('/', authenticate, getProviderServices)
 
-router.patch('/:providerServiceId', authenticate, isAdmin, updateProviderService)
+router.patch('/:providerServiceId', authenticate, updateProviderService)
 
-router.delete('/:providerServiceId', authenticate, isAdmin, removeProviderService)
+router.delete('/:providerServiceId', authenticate, removeProviderService)
 
 export default router

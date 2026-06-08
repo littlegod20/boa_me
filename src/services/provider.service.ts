@@ -148,6 +148,53 @@ export const findProviderServiceById = async(provider_service_id:string):Promise
     }
 }
 
+type ProviderServiceDetailed = ProviderService & {
+    service_name: string
+    provider_name: string
+    provider_profile_picture: string
+    average_rating: number
+    review_count: number
+    total_jobs_completed: number
+    is_verified: boolean
+    service_area: string
+}
+
+export const findProviderServiceByIdWithProviderDetails = async(provider_service_id:string):Promise<ProviderServiceDetailed | null> => {
+    try {
+        const pool = getPool()
+        const result = await pool.query(`
+            SELECT 
+                provider_services.*,
+                providers.service_area,
+                providers.total_jobs_completed,
+                providers.is_verified,
+                services.name as service_name,
+                users.name as provider_name,
+                users.profile_picture as provider_profile_picture,
+                (
+                    SELECT COALESCE(ROUND(AVG(r.rating), 1), 0)
+                    FROM reviews r
+                    WHERE r.provider_user_id = providers.user_id
+                )::float as average_rating,
+                (
+                    SELECT COUNT(*)
+                    FROM reviews r
+                    WHERE r.provider_user_id = providers.user_id
+                )::int as review_count
+            FROM provider_services 
+            LEFT JOIN providers ON provider_services.provider_id = providers.id
+            LEFT JOIN users ON providers.user_id = users.id
+            LEFT JOIN services ON provider_services.service_id = services.id
+            WHERE provider_services.id=$1
+            `,
+            [provider_service_id]
+        )
+        return result.rows[0] || null
+    } catch (error) {
+        throw error
+    }
+}
+
 export const fetchProviderServices = async(provider_id:string, query:QueryType):Promise<ProviderService[] | null> => {
     try {
         const values = []

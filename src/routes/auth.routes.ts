@@ -20,7 +20,7 @@ router.get('/google', passport.authenticate('google', {
 // Google redirects here after authentication
 router.get('/google/callback', passport.authenticate('google', {
     session: false
-}), googleAuthCallback)
+    }), googleAuthCallback)
 
 router.post('/forgot-password', validate(forgotPasswordSchema), userForgotPassword)
 router.post('/password-reset', validate(resetPasswordSchema), passwordReset)

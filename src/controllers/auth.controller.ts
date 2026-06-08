@@ -43,8 +43,5 @@ export const googleAuthCallback = async (req:Request, res:Response) => {
     }
     const token = generateJwtToken(payload)
 
-    // temporary — for testing only
-    // res.status(200).json({ token, user: req.user })
-
     res.redirect(`boame://auth/callback?token=${token}`)
 }

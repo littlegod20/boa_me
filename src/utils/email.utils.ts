@@ -20,7 +20,7 @@ export const sendEmail = async (email:string, content:{subject:string, html:stri
         throw new AppError('Failed to send email', 500)
     }
 
-    return data
+        return data
 }
 
 export const sendPasswordResetEmail = async (email:string, token:string)=> {
@@ -41,6 +41,8 @@ export const sendEmailVerificationToken = async (token:string, email:string)=>{
         html: `
             <p>This is to verify that this email belongs to you.</p>
             <a href="${process.env.CLIENT_URL}/verify-email?token=${token}">Verify your email</a>
+            <p>If the link above doesn't work, copy and open this link:</p>
+            <p>${process.env.CLIENT_URL}/verify-email?token=${token}</p>
             <p>This link expires in 24 hours.</p>
             <p>If you didn't request this, ignore this email.</p>
         `
