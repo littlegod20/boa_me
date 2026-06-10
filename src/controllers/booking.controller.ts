@@ -12,7 +12,7 @@ import { CANCELLATION_FEE_RATE } from "../constants";
 
 export const createBooking = async (req:Request, res:Response) => {
     const user = req.user
-    const {provider_service_id, scheduled_at, customer_location} = req.body
+    const {provider_service_id, scheduled_at, customer_location, customer_latitude, customer_longitude} = req.body
 
     if(!user){
         throw new AppError('Unauthorized', 401)
@@ -32,7 +32,9 @@ export const createBooking = async (req:Request, res:Response) => {
         customer_id: user.id,
         provider_service_id,
         scheduled_at,
-        customer_location
+        customer_location,
+        customer_latitude,
+        customer_longitude
     }
 
     const booking = await insertBooking(input)

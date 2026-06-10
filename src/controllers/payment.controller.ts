@@ -100,9 +100,12 @@ export const webhookHandler = async (req:Request, res:Response)=>{
     
         // update payment status to success
         await updatePaymentStatus(data.reference, PaymentStatus.SUCCESS)
+
+        logger.info(`Payment status updated to success: ${payment.payment_status}`)
      
         // update booking status to confirmed
-        await updateBookingStatus(payment.booking_id, {booking_status: BookingStatus.PENDING_CONFIRMATION})
+        const updatedBooking = await updateBookingStatus(payment.booking_id, {booking_status: BookingStatus.PENDING_CONFIRMATION})
+        logger.info(`Booking status updated to pending confirmation: ${updatedBooking?.booking_status}`)
     }
 
 

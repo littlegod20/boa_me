@@ -10,9 +10,9 @@ export const insertBooking = async(bookingInput: CreateBookingInput): Promise<Bo
         const result = await pool.query(
             `
             INSERT INTO bookings 
-                (customer_id, provider_service_id, scheduled_at, customer_location, booking_status) 
+                (customer_id, provider_service_id, scheduled_at, customer_location, booking_status, customer_latitude, customer_longitude) 
             VALUES 
-                ($1, $2, $3, $4, $5)
+                ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             `,
             [
@@ -20,7 +20,9 @@ export const insertBooking = async(bookingInput: CreateBookingInput): Promise<Bo
                 bookingInput.provider_service_id,
                 bookingInput.scheduled_at,
                 bookingInput.customer_location,
-                BookingStatus.PENDING_PAYMENT
+                BookingStatus.PENDING_PAYMENT,
+                bookingInput.customer_latitude,
+                bookingInput.customer_longitude
             ]
         );
         return result.rows[0] || null;
@@ -119,11 +121,11 @@ export const updateBookingStatus = async (
             UPDATE bookings
             SET booking_status = $1, 
             updated_at = NOW(),
-            completed_at = CASE WHEN $1 = 'completed' THEN NOW() ELSE completed_at END
-            WHERE id = $2
+            completed_at = CASE WHEN $2 = 'completed' THEN NOW() ELSE completed_at END
+            WHERE id = $3
             RETURNING *
             `,
-            [update.booking_status, bookingId]
+            [update.booking_status, update.booking_status, bookingId]
         );
         return result.rows[0] || null;
     } catch (error) {

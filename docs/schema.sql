@@ -129,6 +129,8 @@ CREATE TABLE public.bookings (
     scheduled_at timestamp without time zone,
     booking_status public.booking_status_type,
     customer_location character varying,
+    customer_latitude numeric,
+    customer_longitude numeric,
     created_at timestamp without time zone DEFAULT now(),
     updated_at timestamp without time zone DEFAULT now(),
     completed_at timestamp without time zone

@@ -14,6 +14,8 @@ export interface Booking{
     scheduled_at:Date
     booking_status: BookingStatus
     customer_location:string
+    customer_latitude: number
+    customer_longitude: number
     customer_name?:string
     customer_email?:string 
     price?:number
@@ -30,6 +32,8 @@ export type CreateBookingInput = {
     provider_service_id:string
     scheduled_at:Date
     customer_location:string
+    customer_latitude: number
+    customer_longitude: number
 }
 
 export type UpdateBookingStatus = {
