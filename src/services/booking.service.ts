@@ -72,7 +72,7 @@ export const fetchBookings = async(
         let index = 1;
 
         if (customer_id) {
-            conditions.push(`customer_id = $${index++}`);
+            conditions.push(`bookings.customer_id = $${index++}`);
             values.push(customer_id);
         }
 
@@ -82,7 +82,7 @@ export const fetchBookings = async(
         }
 
         if (status) {
-            conditions.push(`booking_status = $${index++}`);
+            conditions.push(`bookings.booking_status = $${index++}`);
             values.push(status);
         }
 
@@ -96,7 +96,18 @@ export const fetchBookings = async(
 
         const result = await pool.query(
             `
-            SELECT * FROM bookings
+            SELECT 
+                bookings.*,
+                services.name AS service_name,
+                provider_services.price,
+                provider_users.name AS provider_name,
+                customer_users.name AS customer_name
+            FROM bookings
+            LEFT JOIN provider_services ON bookings.provider_service_id = provider_services.id
+            LEFT JOIN services ON provider_services.service_id = services.id
+            LEFT JOIN providers ON provider_services.provider_id = providers.id
+            LEFT JOIN users AS provider_users ON providers.user_id = provider_users.id
+            LEFT JOIN users AS customer_users ON bookings.customer_id = customer_users.id
             ${whereClause}
             ORDER BY created_at DESC
             LIMIT $${index++} OFFSET $${index}

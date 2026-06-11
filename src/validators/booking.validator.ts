@@ -8,8 +8,8 @@ export const createBookingSchema = z.object({
         {message: 'Scheduled date must be in the future'}
     ),
     customer_location: z.string().min(1,'Location is required'),
-    customer_latitude: z.number().min(-90).max(90),
-    customer_longitude: z.number().min(-180).max(180)
+    customer_latitude: z.number().min(-90).max(90).optional(),
+    customer_longitude: z.number().min(-180).max(180).optional()
 })
 
 export const changeBookingStatusSchema = z.object({
