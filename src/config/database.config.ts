@@ -9,7 +9,8 @@ export const connectDB = async () => {
         connectionString: process.env.DATABASE_URL
     })
     try{
-        await pool.connect()
+        const client = await pool.connect()
+        client.release()
         logger.info('Database connected successfully')
     } catch(error){
         logger.error('Database connection error', { error })
