@@ -8,8 +8,8 @@ import { createServiceSchema, updateServiceSchema } from "../validators/service.
 const router = Router()
 
 router.post('/', authenticate, isAdmin, validate(createServiceSchema), createService)
-router.get('/',  getAllServices)
-router.get('/:serviceId', getServiceById)
+router.get('/', authenticate,  getAllServices)
+router.get('/:serviceId', authenticate, getServiceById)
 router.patch('/:serviceId', authenticate, isAdmin, validate(updateServiceSchema), updateService)
 router.delete('/:serviceId', authenticate, isAdmin, removeService)
 

@@ -12,10 +12,15 @@ export const authenticate = (req:Request, res:Response, next:NextFunction) => {
 
     const parsed_token = token.split(' ')[1]
 
-    // verify token
-    const payload = verifyToken(parsed_token)
-
-    req.user = payload
-
-    next()
+    try {
+        // verify token
+        const payload = verifyToken(parsed_token)
+    
+        req.user = payload
+    
+        next()
+        
+    } catch (error) {
+        res.status(401).json({message:error})
+    }
 }

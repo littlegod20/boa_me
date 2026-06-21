@@ -8,6 +8,7 @@ import { CreatePaymentInput, PaymentStatus } from "../types/payment.types";
 import { initializePaystackPayment, refundPaystackPayment } from "../utils/paystack.utils";
 import { findProviderServiceById } from "../services/provider.service";
 import { CANCELLATION_FEE_RATE } from "../constants";
+import { logger } from "../config/logger.config";
 
 
 export const createBooking = async (req:Request, res:Response) => {
@@ -210,20 +211,22 @@ export const changeBookingStatus = async (req: Request, res: Response) => {
 
             // trigger Paystack refund => if provider cancelled=full_refund else deduct refund
             const deductable = payment.amount * CANCELLATION_FEE_RATE
+            const baseAmount = Number(payment.amount) 
             let amount:number = 0
 
             const isBookingConfirmed = booking.booking_status === BookingStatus.CONFIRMED
             const isBookingPendingConfirm = booking.booking_status === BookingStatus.PENDING_CONFIRMATION
 
             if(isBookingConfirmed){
-                amount = isCustomer ? (payment.amount - deductable)  : payment.amount
+                amount = isCustomer ? (baseAmount - deductable)  : baseAmount
             }
 
             if (isBookingPendingConfirm){
-                amount = payment.amount
+                amount = baseAmount
             }
 
-            const refund = await refundPaystackPayment(payment.paystack_reference, amount)
+            const refund = await refundPaystackPayment(payment.paystack_reference, Math.round(amount * 100))
+            logger.info('Refund initiated', { refund: refund.data }) // remove later
 
             if(!refund){
                 throw new AppError('Refund was unsuccessful', 500)

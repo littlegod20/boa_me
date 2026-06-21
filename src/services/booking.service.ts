@@ -42,13 +42,15 @@ export const findBookingById = async(bookingId: string): Promise<Booking | null>
                 provider_services.price,
                 services.name as service_name,
                 provider_users.name as provider_name,
-                provider_users.id as provider_user_id
+                provider_users.id as provider_user_id,
+                reviews.id as review_id
             FROM bookings
             LEFT JOIN users ON bookings.customer_id = users.id
             LEFT JOIN provider_services ON bookings.provider_service_id = provider_services.id
             LEFT JOIN services ON provider_services.service_id = services.id
             LEFT JOIN providers ON provider_services.provider_id = providers.id
             LEFT JOIN users AS provider_users ON providers.user_id = provider_users.id
+            LEFT JOIN reviews ON reviews.booking_id = bookings.id
             WHERE bookings.id = $1
             `,
             [bookingId]

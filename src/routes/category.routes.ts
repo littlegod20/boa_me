@@ -8,8 +8,8 @@ import { createCategorySchema, updateCategorySchema } from "../validators/catego
 const router = Router()
 
 router.post('/', authenticate , isAdmin, validate(createCategorySchema), createCategory)
-router.get('/',  getAllCategories)
-router.get('/:categoryId', getCategoryById)
+router.get('/', authenticate, getAllCategories)
+router.get('/:categoryId', authenticate, getCategoryById)
 router.patch('/:categoryId', authenticate, isAdmin, validate(updateCategorySchema), updateCategory)
 router.delete('/:categoryId', authenticate, isAdmin, removeCategory)
 
