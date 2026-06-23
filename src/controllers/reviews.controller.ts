@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AppError } from "../middlewares/errorHandler";
 import { findBookingById } from "../services/booking.service";
 import { BookingStatus } from "../types/booking.types";
-import { fetchReviews, findReviewByBookingId, insertReview } from "../services/review.service";
+import { fetchReviewById, fetchReviews, findReviewByBookingId, insertReview } from "../services/review.service";
 import { CreateReviewInput, Review } from "../types/reviews.types";
 import { Role } from "../types/user.types";
 import { findProviderByUserId } from "../services/provider.service";
@@ -82,4 +82,19 @@ export const getReviews = async (req:Request, res:Response) => {
     }
 
     res.status(200).json({success:true, message:'Fetched reviews successfully', data:reviews})
+}
+
+export const getReviewById = async (req:Request, res:Response)=>{
+    const {reviewId} = req.params
+
+    if(!reviewId || typeof reviewId !== 'string'){
+        return res.status(400).json({message:'Invalid review id'})
+    }
+
+    const review = await fetchReviewById(reviewId)
+
+    if(!review){
+        return res.status(404).json({message:'Review for booking not found'})
+    }
+    res.status(200).json({message:'Review retrieved successfully', data:review})
 }

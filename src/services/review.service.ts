@@ -81,3 +81,14 @@ export const fetchReviews = async ( query:QueryType, customer_id?:string, provid
         throw error  
     }
 }
+
+export const fetchReviewById = async (review_id:string)=>{
+    const pool = getPool()
+    try {
+        const result = await pool.query(`SELECT * FROM reviews WHERE id=$1`, [review_id])
+        return result.rows[0]
+    } catch (error) {
+        logger.error('fetchReviewById error', {error})
+        throw error
+    }
+}
