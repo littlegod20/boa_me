@@ -202,7 +202,7 @@ export const fetchProviderServices = async(provider_id:string, query:QueryType):
         let index = 1
         
         if(provider_id){
-            conditions.push(`provider_id=$${index++}`)
+            conditions.push(`provider_services.provider_id=$${index++}`)
             values.push(provider_id)
         }
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
@@ -216,8 +216,14 @@ export const fetchProviderServices = async(provider_id:string, query:QueryType):
         const pool = getPool()
         const result = await pool.query(
             `
-            SELECT * FROM provider_services
+            SELECT 
+                provider_services.*,
+                services.name AS service_name,
+                services.description AS service_description
+            FROM provider_services
+            LEFT JOIN services ON provider_services.service_id = services.id
             ${whereClause}
+            ORDER BY provider_services.created_at DESC
             LIMIT $${index++} OFFSET $${index}
             `,
             values

@@ -66,14 +66,29 @@ export const getProviderServiceById = async (req: Request, res: Response) => {
 
 // Get Provider Services (with pagination/search)
 export const getProviderServices = async (req: Request, res: Response) => {
+    if (!req.user) {
+        throw new AppError('Unauthorized!', 401)
+    }
+
     const { providerId } = req.query
     const query: QueryType = {
         page: parseInt(req.query.page as string) || 1,
         limit: parseInt(req.query.limit as string) || 10
     }
 
+    // default to the authenticated user's own provider services when no providerId is given
+    let providerIdToUse = providerId as string | undefined
+
+    if (!providerIdToUse) {
+        const provider = await findProviderByUserId(req.user.id)
+        if (!provider) {
+            throw new AppError('Provider profile not found', 404)
+        }
+        providerIdToUse = provider.id
+    }
+
     const providerServices = await fetchProviderServices(
-        providerId as string || '',
+        providerIdToUse,
         query
     )
 
