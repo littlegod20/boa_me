@@ -106,10 +106,10 @@ export const getBookings = async (req: Request, res: Response) => {
 
     // determine filter based on who is asking
     let customer_id: string | undefined
-    let provider_id: string | undefined
+    let provider_user_id: string | undefined
 
     if (as === 'provider') {
-        provider_id = user.id  // show bookings where user is the provider
+        provider_user_id = user.id  // show bookings where user is the provider
     } else {
         customer_id = user.id  // default: show bookings where user is the customer
     }
@@ -117,7 +117,7 @@ export const getBookings = async (req: Request, res: Response) => {
     // admin sees all
     if (user.role === Role.ADMIN) {
         customer_id = undefined
-        provider_id = undefined
+        provider_user_id = undefined
     }
 
     // status filter
@@ -129,7 +129,7 @@ export const getBookings = async (req: Request, res: Response) => {
     const result = await fetchBookings(
         { page: Number(page) || 1, limit: Number(limit) || 10 },
         customer_id,
-        provider_id,
+        provider_user_id,
         statusEnum
     )
 

@@ -64,7 +64,7 @@ export const findBookingById = async(bookingId: string): Promise<Booking | null>
 export const fetchBookings = async(
     query: QueryType,
     customer_id?: string,
-    provider_id?: string,
+    provider_user_id?: string,
     status?: BookingStatus
 ): Promise<Booking[] | null> => {
     try {
@@ -78,9 +78,9 @@ export const fetchBookings = async(
             values.push(customer_id);
         }
 
-        if (provider_id) {
-            conditions.push(`provider_service_id IN (SELECT id FROM provider_services WHERE provider_id = $${index++})`);
-            values.push(provider_id);
+        if (provider_user_id) {
+            conditions.push(`provider_users.id=$${index++}`)
+            values.push(provider_user_id);
         }
 
         if (status) {
