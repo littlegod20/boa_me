@@ -3,6 +3,7 @@ import { logger } from "../config/logger.config"
 import { CACHE_KEYS, CACHE_TTL } from "../constants"
 import { QueryType } from "../types/pagination.types"
 import { CreateProvider, CreateProviderService, Provider, ProviderService } from "../types/provider.types"
+import { Transaction } from "../types/transaction.types"
 import { deleteCache, getCache, setCache } from "../utils/cache.utils"
 
 // ------------------------------------------------
@@ -297,7 +298,6 @@ export const modifyProviderService = async(provider_service_id:string, service_i
             values.push(update.price)
         }
 
-
         values.push(provider_service_id)
 
         if (fields.length === 0) {
@@ -337,4 +337,20 @@ export const deleteProviderService = async(provider_service_id:string):Promise<P
     } catch (error) {
         throw error
     }
+}
+
+export const fetchProviderTransactions = async (provider_id: string): Promise<Transaction[]> => {
+    const pool = getPool()
+    const result = await pool.query(
+        `SELECT transactions.*, services.name as service_name, customer_users.name as customer_name
+         FROM transactions
+         LEFT JOIN bookings ON transactions.booking_id = bookings.id
+         LEFT JOIN provider_services ON bookings.provider_service_id = provider_services.id
+         LEFT JOIN services ON provider_services.service_id = services.id
+         LEFT JOIN users AS customer_users ON transactions.customer_id = customer_users.id
+         WHERE transactions.provider_id = $1 AND transactions.transaction_type = 'payout'
+         ORDER BY transactions.created_at DESC`,
+        [provider_id]
+    )
+    return result.rows
 }

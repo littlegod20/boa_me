@@ -1,8 +1,9 @@
 import { logger } from "../config/logger.config"
 import { getChannel } from "../config/rabbitmq.config"
 import { PLATFORM_COMMISSION_RATE } from "../constants"
+import { AppError } from "../middlewares/errorHandler"
 import { findProviderByUserId } from "../services/provider.service"
-import { insertTransaction } from "../services/transaction.service"
+import { insertTransaction, updateTransaction } from "../services/transaction.service"
 import { findUserById } from "../services/user.service"
 import { PayoutJobPayload } from "../types/payout.types"
 import { TransactionStatus, TransactionType } from "../types/transaction.types"
@@ -55,6 +56,21 @@ export const startPayoutWorker = async () => {
                 currency: 'GHS'
             })
 
+            // create a pending transaction
+            const transaction = await insertTransaction({
+                booking_id: payload.booking_id,
+                customer_id: payload.customer_id,
+                provider_id: provider.id,
+                payment_id: payload.payment_id,
+                amount: payoutAmount,
+                transaction_type: TransactionType.PAYOUT,
+                transaction_status: TransactionStatus.PENDING
+            })
+
+            if (!transaction){
+                throw new AppError('Error creating transaction for payout', 500)
+            }
+
             // initiate transfer
             await initiatePaystackTransfer({
                 source: 'balance',
@@ -63,15 +79,9 @@ export const startPayoutWorker = async () => {
                 reason: `Payout for booking ${payload.booking_id}`
             })
 
-            await insertTransaction({
-                booking_id: payload.booking_id,
-                customer_id: payload.customer_id,
-                provider_id: provider.id,
-                payment_id: payload.payment_id,
-                amount: payoutAmount,
-                transaction_type: TransactionType.PAYOUT,
-                transaction_status: TransactionStatus.COMPLETED
-            })
+
+            // update transaction after successfull payout
+            await updateTransaction(transaction?.id, TransactionStatus.COMPLETED)
 
             logger.info(`Payout processed for booking ${payload.booking_id}`)
 

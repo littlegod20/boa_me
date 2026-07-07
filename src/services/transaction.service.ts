@@ -1,6 +1,6 @@
 import { getPool } from "../config/database.config"
 import { logger } from "../config/logger.config"
-import { CreateTransaction, Transaction } from "../types/transaction.types"
+import { CreateTransaction, Transaction, TransactionStatus } from "../types/transaction.types"
 
 
 export const insertTransaction = async (input:CreateTransaction):Promise<Transaction | null> => {
@@ -37,6 +37,25 @@ export const findTransactionByBookingId = async(booking_id:string):Promise<Trans
         return result.rows[0] || null 
     } catch (error) {
         logger.error('findTransactionByBookingId error', { error })
+        throw error
+    }
+}
+
+export const updateTransaction = async(transaction_id:string, transaction_status:TransactionStatus):Promise<Transaction | null>=>{
+    try {
+        const pool = getPool()
+        const result = await pool.query(
+            `
+            UPDATE transactions
+            SET transaction_status=$1
+            WHERE id=$2
+            RETURNING *
+            `,
+            [transaction_status, transaction_id]
+        )
+        return result.rows[0]
+    } catch (error) {
+        logger.error('updateTransactionById error', { error })
         throw error
     }
 }

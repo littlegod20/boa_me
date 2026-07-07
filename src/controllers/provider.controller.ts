@@ -9,7 +9,8 @@ import {
     modifyProviderService,
     findProviderByUserId,
     findProviderServiceById,
-    findProviderServiceByIdWithProviderDetails
+    findProviderServiceByIdWithProviderDetails,
+    fetchProviderTransactions
 } from "../services/provider.service"
 import { QueryType } from "../types/pagination.types"
 import { CreateProvider, CreateProviderService, PayoutMethod } from "../types/provider.types"
@@ -228,5 +229,27 @@ export const registerAsProvider = async (req: Request, res: Response) => {
         success: true,
         data: createdProvider,
         token
+    })
+}
+
+export const getProviderEarnings = async (req:Request, res:Response) => {
+    if (!req.user) throw new AppError('Unauthorized', 401)
+    
+    const provider = await findProviderByUserId(req.user.id)
+    if (!provider) throw new AppError('Provider profile not found', 404)
+
+    const transactions = await fetchProviderTransactions(provider.id)
+    
+    const totalEarned = transactions
+        .filter(t => t.transaction_status === 'completed')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+    
+    const pending = transactions
+        .filter(t => t.transaction_status === 'pending')
+        .reduce((sum, t) => sum + Number(t.amount), 0)
+    
+    res.status(200).json({
+        success: true,
+        data: { totalEarned, pending, transactions }
     })
 }

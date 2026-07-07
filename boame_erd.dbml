@@ -279,7 +279,7 @@ Table transactions {
 
     customer_id uuid [ref: > users.id]
 
-    provider_id uuid [ref: > users.id]
+    provider_id uuid [ref: > providers.id]
 
     payment_id uuid [ref: > payments.id]
 

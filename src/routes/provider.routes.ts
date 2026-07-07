@@ -7,7 +7,8 @@ import {
     getServiceProviders, 
     updateProviderService, 
     removeProviderService,
-    registerAsProvider
+    registerAsProvider,
+    getProviderEarnings
 } from "../controllers/provider.controller";
 import { validate } from "../middlewares/validate.middleware";
 import { addProviderServiceSchema, registerProviderSchema } from "../validators/provider.validator";
@@ -22,6 +23,8 @@ router.post('/', authenticate,validate(addProviderServiceSchema), createProvider
 
 router.get('/service/:serviceId/providers', authenticate, getServiceProviders)
 
+router.get('/earnings', authenticate, getProviderEarnings)
+
 router.get('/:providerServiceId', authenticate, getProviderServiceById)
 
 router.get('/', authenticate, getProviderServices)
@@ -29,5 +32,7 @@ router.get('/', authenticate, getProviderServices)
 router.patch('/:providerServiceId', authenticate, updateProviderService)
 
 router.delete('/:providerServiceId', authenticate, removeProviderService)
+
+
 
 export default router
