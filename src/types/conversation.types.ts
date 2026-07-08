@@ -3,6 +3,8 @@ export interface Conversation {
     booking_id?: string
     customer_id: string
     provider_id: string
+    last_message:string | null
+    last_message_at:Date | null
     created_at: Date
     updated_at: Date
 }
@@ -11,6 +13,7 @@ export interface Message {
     id: string
     content: string
     conversation_id: string
+    is_edited:boolean
     sender_id: string
     timestamp: Date
     is_seen: boolean
@@ -28,4 +31,10 @@ export type CreateMessageInput = {
     content: string
     conversation_id: string
     sender_id: string
+}
+
+export type UpdateMessageInput = {
+    content?: string
+    conversation_id?: string
+    is_seen?:boolean
 }

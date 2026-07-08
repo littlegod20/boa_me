@@ -1,6 +1,6 @@
 import { getPool } from "../config/database.config";
 import { logger } from "../config/logger.config";
-import { Conversation, CreateConversationInput, CreateMessageInput, Message } from "../types/conversation.types";
+import { Conversation, CreateConversationInput, CreateMessageInput, Message, UpdateMessageInput } from "../types/conversation.types";
 import { QueryType } from "../types/pagination.types";
 
 
@@ -82,7 +82,27 @@ export const fetchUserConversations = async(query:QueryType, userId:string):Prom
         const pool = getPool()
         const result = await pool.query(
             `
-            SELECT * FROM conversations WHERE customer_id = $1 OR provider_id=$1
+            SELECT 
+                conversations.*, 
+                customer_users.name as customer_name,
+                customer_users.profile_picture as customer_profile,
+                provider_users.name as provider_name,
+                provider_users.profile_picture as provider_profile,
+                (
+                    SELECT  content FROM messages
+                    WHERE  messages.conversation_id = conversations.id
+                    ORDER BY created_at DESC LIMIT 1
+                ) as last_message,
+                (
+                    SELECT created_at FROM messages 
+                    WHERE messages.conversation_id = conversations.id 
+                    ORDER BY created_at DESC LIMIT 1
+                ) as last_message_at
+            FROM conversations 
+            LEFT JOIN users as customer_users ON conversations.customer_id = customer_users.id
+            LEFT JOIN users as provider_users ON conversations.provider_id = provider_users.id
+            WHERE customer_id = $1 OR provider_id=$1
+            ORDER BY last_message_at DESC NULLS LAST
             LIMIT $2 OFFSET $3
             `,
             [userId, limit, offset]
@@ -113,6 +133,45 @@ export const insertMessage = async(messageInput:CreateMessageInput):Promise<Mess
         return result.rows[0] || null
     } catch (error) {
         logger.error('insertMessage error', { error })
+        throw error
+    }
+}
+
+export const updateMessage = async(messageInput:UpdateMessageInput, message_id:string):Promise<Message | null>=>{
+    try {
+        const pool = getPool()
+
+        const fields = []
+        const values = []
+
+        let index = 1
+
+        if (messageInput.content){
+            fields.push(`content = $${index++}`)
+            values.push(messageInput.content)
+            fields.push(`is_edited = true`) 
+        }
+
+        if (messageInput.is_seen){
+            fields.push(`is_seen = $${index++}`)
+            values.push(messageInput.is_seen)
+        }
+
+        fields.push(`updated_at=NOW()`)
+        values.push(message_id)
+
+        const result = await pool.query(
+            `
+            UPDATE messages
+            SET ${fields.join(', ')}
+            WHERE id=$${index}
+            RETURNING *
+            `,
+            values
+        )
+        return result.rows[0]
+    } catch (error) {
+        logger.error('updateMessage error', { error })
         throw error
     }
 }

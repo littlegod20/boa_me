@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import { logger } from "./logger.config";
 import { verifyToken } from "../utils/jwt.utils";
-import { fetchUserConversations } from "../services/conversation.service";
+import { fetchUserConversations, updateMessage } from "../services/conversation.service";
 import { insertMessage } from "../services/conversation.service";
 
 let io:Server
@@ -75,7 +75,9 @@ export const initializeSocket = (httpServer:HttpServer) => {
 
         // handle message_seen event
         socket.on('message_seen', async(data)=>{
-            const {conversation_id} = data
+            const {conversation_id, is_seen, message_id} = data
+
+            await updateMessage({is_seen}, message_id)
 
             // mark messages as seen TODO: add later
             io.to(`conversation_${conversation_id}`).emit('message_seen', {
