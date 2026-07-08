@@ -8,14 +8,14 @@ export const insertTransaction = async (input:CreateTransaction):Promise<Transac
         const pool = getPool()
         const result = await pool.query(
             `
-            INSERT INTO transactions (booking_id, customer_id, provider_id, payment_id, amount, transaction_type, transaction_status)
+            INSERT INTO transactions (booking_id, customer_user_id, provider_user_id, payment_id, amount, transaction_type, transaction_status)
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
             `,
             [
                 input.booking_id,
-                input.customer_id,
-                input.provider_id,
+                input.customer_user_id,
+                input.provider_user_id,
                 input.payment_id,
                 input.amount,
                 input.transaction_type,
@@ -47,15 +47,16 @@ export const updateTransaction = async(transaction_id:string, transaction_status
         const result = await pool.query(
             `
             UPDATE transactions
-            SET transaction_status=$1
+            SET transaction_status=$1,
+                updated_at=NOW()
             WHERE id=$2
             RETURNING *
             `,
             [transaction_status, transaction_id]
         )
-        return result.rows[0]
+        return result.rows[0] || null
     } catch (error) {
-        logger.error('updateTransactionById error', { error })
+        logger.error('updateTransaction error', { error })
         throw error
     }
 }

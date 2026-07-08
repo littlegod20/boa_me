@@ -272,8 +272,8 @@ CREATE TABLE public.services (
 CREATE TABLE public.transactions (
     id uuid DEFAULT gen_random_uuid() NOT NULL,
     booking_id uuid,
-    customer_id uuid,
-    provider_id uuid,
+    customer_user_id uuid,
+    provider_user_id uuid,
     payment_id uuid,
     amount numeric,
     transaction_type public.transaction_type_enum,
@@ -605,11 +605,11 @@ ALTER TABLE ONLY public.transactions
 
 
 --
--- Name: transactions transactions_provider_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: transactions transactions_provider_user_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.transactions
-    ADD CONSTRAINT transactions_provider_id_fkey FOREIGN KEY (provider_id) REFERENCES public.users(id) ON DELETE SET NULL;
+    ADD CONSTRAINT transactions_provider_user_id_fkey FOREIGN KEY (provider_user_id) REFERENCES public.users(id) ON DELETE SET NULL;
 
 
 --

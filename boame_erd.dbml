@@ -277,9 +277,9 @@ Table transactions {
 
     booking_id uuid [ref: > bookings.id]
 
-    customer_id uuid [ref: > users.id]
+    customer_user_id uuid [ref: > users.id]
 
-    provider_id uuid [ref: > providers.id]
+    provider_user_id uuid [ref: > users.id]
 
     payment_id uuid [ref: > payments.id]
 

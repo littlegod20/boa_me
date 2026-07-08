@@ -13,8 +13,8 @@ export enum TransactionStatus{
 export interface Transaction {
     id: string
     booking_id:string
-    customer_id: string
-    provider_id: string
+    customer_user_id: string
+    provider_user_id: string
     payment_id: string
     amount: number
     transaction_type: TransactionType
@@ -25,8 +25,8 @@ export interface Transaction {
 
 export type CreateTransaction = {
     booking_id:string
-    customer_id: string
-    provider_id: string
+    customer_user_id: string
+    provider_user_id: string
     payment_id: string
     amount: number
     transaction_type:TransactionType

@@ -59,8 +59,8 @@ export const startPayoutWorker = async () => {
             // create a pending transaction
             const transaction = await insertTransaction({
                 booking_id: payload.booking_id,
-                customer_id: payload.customer_id,
-                provider_id: provider.id,
+                customer_user_id: payload.customer_id,
+                provider_user_id: provider.user_id,
                 payment_id: payload.payment_id,
                 amount: payoutAmount,
                 transaction_type: TransactionType.PAYOUT,

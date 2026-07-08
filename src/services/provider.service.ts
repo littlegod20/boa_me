@@ -339,7 +339,7 @@ export const deleteProviderService = async(provider_service_id:string):Promise<P
     }
 }
 
-export const fetchProviderTransactions = async (provider_id: string): Promise<Transaction[]> => {
+export const fetchProviderTransactions = async (provider_user_id: string): Promise<Transaction[]> => {
     const pool = getPool()
     const result = await pool.query(
         `SELECT transactions.*, services.name as service_name, customer_users.name as customer_name
@@ -347,10 +347,10 @@ export const fetchProviderTransactions = async (provider_id: string): Promise<Tr
          LEFT JOIN bookings ON transactions.booking_id = bookings.id
          LEFT JOIN provider_services ON bookings.provider_service_id = provider_services.id
          LEFT JOIN services ON provider_services.service_id = services.id
-         LEFT JOIN users AS customer_users ON transactions.customer_id = customer_users.id
-         WHERE transactions.provider_id = $1 AND transactions.transaction_type = 'payout'
+         LEFT JOIN users AS customer_users ON transactions.customer_user_id = customer_users.id
+         WHERE transactions.provider_user_id = $1 AND transactions.transaction_type = 'payout'
          ORDER BY transactions.created_at DESC`,
-        [provider_id]
+        [provider_user_id]
     )
     return result.rows
 }

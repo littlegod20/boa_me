@@ -234,11 +234,8 @@ export const registerAsProvider = async (req: Request, res: Response) => {
 
 export const getProviderEarnings = async (req:Request, res:Response) => {
     if (!req.user) throw new AppError('Unauthorized', 401)
-    
-    const provider = await findProviderByUserId(req.user.id)
-    if (!provider) throw new AppError('Provider profile not found', 404)
 
-    const transactions = await fetchProviderTransactions(provider.id)
+    const transactions = await fetchProviderTransactions(req.user.id)
     
     const totalEarned = transactions
         .filter(t => t.transaction_status === 'completed')
