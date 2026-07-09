@@ -15,7 +15,7 @@ import {
 const router = Router();
 
 router.post("/", authenticate, validate(createConversationSchema), createConversation);
-router.get("/", authenticate, validateQuery(paginationQuerySchema), getUserConversations);
+router.get("/", authenticate, getUserConversations);
 router.get(
     "/:conversationId/messages",
     authenticate,
