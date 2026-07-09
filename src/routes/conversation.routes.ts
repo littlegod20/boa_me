@@ -20,7 +20,7 @@ router.get(
     "/:conversationId/messages",
     authenticate,
     validateParams(conversationIdParamSchema),
-    validateQuery(paginationQuerySchema),
+    // validateQuery(paginationQuerySchema),
     getConversationMessages
 );
 
