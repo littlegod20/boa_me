@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { AppError } from "../middlewares/errorHandler";
 import { findBookingById } from "../services/booking.service";
-import { fetchMessages, fetchUserConversations, findConversationById, findConversationsBetweenUsers, insertConversation } from "../services/conversation.service";
+import { fetchMessages, fetchUserConversations, findConversationById, findConversationsBetweenUsers, insertConversation, markMessagesSeen } from "../services/conversation.service";
 import { Booking } from "../types/booking.types";
 import type { ConversationIdParamSchema, PaginationQuerySchema } from "../validators/conversation.validator";
 
@@ -69,3 +69,18 @@ export const getConversationMessages = async(req:Request, res:Response) => {
 
     res.status(200).json({success:true, message:'Conversation messages fetched successfully', data:convoMessages})
 } 
+
+export const markConversationRead = async (req: Request, res: Response) => {
+    const { conversationId } = req.params as unknown as ConversationIdParamSchema
+    const user = req.user
+    if (!user) throw new AppError('Unauthenticated', 401)
+
+    const conversation = await findConversationById(conversationId)
+    if (!conversation) throw new AppError('Conversation not found', 404)
+    if (conversation.customer_id !== user.id && conversation.provider_id !== user.id) {
+        throw new AppError('You are not part of this conversation', 403)
+    }
+
+    const updated = await markMessagesSeen(conversationId, user.id)
+    res.status(200).json({ success: true, message: 'Conversation marked as read', data: { updated } })
+}

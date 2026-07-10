@@ -5,11 +5,11 @@ import {
     createConversation,
     getConversationMessages,
     getUserConversations,
+    markConversationRead,
 } from "../controllers/conversation.controller";
 import {
     conversationIdParamSchema,
-    createConversationSchema,
-    paginationQuerySchema,
+    createConversationSchema
 } from "../validators/conversation.validator";
 
 const router = Router();
@@ -23,5 +23,11 @@ router.get(
     // validateQuery(paginationQuerySchema),
     getConversationMessages
 );
+router.patch(
+    "/:conversationId/read",
+    authenticate,
+    validateParams(conversationIdParamSchema),
+    markConversationRead
+)
 
 export default router;

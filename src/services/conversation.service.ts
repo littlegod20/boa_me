@@ -97,7 +97,13 @@ export const fetchUserConversations = async(query:QueryType, userId:string):Prom
                     SELECT created_at FROM messages 
                     WHERE messages.conversation_id = conversations.id 
                     ORDER BY created_at DESC LIMIT 1
-                ) as last_message_at
+                ) as last_message_at,
+                (
+                    SELECT COUNT(*)::int FROM messages
+                    WHERE messages.conversation_id = conversations.id
+                    AND messages.is_seen = false
+                    AND messages.sender_id <> $1
+                ) as unread_count
             FROM conversations 
             LEFT JOIN users as customer_users ON conversations.customer_id = customer_users.id
             LEFT JOIN users as provider_users ON conversations.provider_id = provider_users.id
@@ -172,6 +178,26 @@ export const updateMessage = async(messageInput:UpdateMessageInput, message_id:s
         return result.rows[0]
     } catch (error) {
         logger.error('updateMessage error', { error })
+        throw error
+    }
+}
+
+export const markMessagesSeen = async (conversationId: string, userId: string): Promise<number> => {
+    try {
+        const pool = getPool()
+        const result = await pool.query(
+            `
+            UPDATE messages
+            SET is_seen = true, updated_at = NOW()
+            WHERE conversation_id = $1
+              AND sender_id <> $2
+              AND is_seen = false
+            `,
+            [conversationId, userId]
+        )
+        return result.rowCount ?? 0
+    } catch (error) {
+        logger.error('markMessagesSeen error', { error })
         throw error
     }
 }

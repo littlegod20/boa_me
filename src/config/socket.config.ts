@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import { logger } from "./logger.config";
 import { verifyToken } from "../utils/jwt.utils";
-import { fetchUserConversations, updateMessage } from "../services/conversation.service";
+import { fetchUserConversations, findConversationById, updateMessage } from "../services/conversation.service";
 import { insertMessage } from "../services/conversation.service";
 
 let io:Server
@@ -46,6 +46,18 @@ export const initializeSocket = (httpServer:HttpServer) => {
             socket.join(`conversation_${convo.id}`)
         })
         logger.info(`User ${user.id} joined ${conversations.length} conversation rooms`)
+
+        // join a specific conversation room (for newly-created conversations)
+        socket.on('join_conversation',async ({ conversation_id }) => {
+            if (!conversation_id) return
+            const conversation = await findConversationById(conversation_id)
+            if (!conversation) return
+            if (conversation.customer_id !== user.id && conversation.provider_id !== user.id) {
+                return  // not a participant — don't join
+            }
+            socket.join(`conversation_${conversation_id}`)
+            logger.info(`User ${user.id} joined conversation_${conversation_id}`)
+        })
 
         // handle send_message event
         socket.on('send_message', async (data)=>{

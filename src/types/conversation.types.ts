@@ -5,6 +5,7 @@ export interface Conversation {
     provider_id: string
     last_message:string | null
     last_message_at:Date | null
+    unread_count:number
     created_at: Date
     updated_at: Date
 }
