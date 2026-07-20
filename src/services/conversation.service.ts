@@ -221,13 +221,13 @@ export const fetchMessages = async(query:QueryType, conversationId?:string):Prom
         const offset = (page - 1) * limit
         values.push(limit)
         values.push(offset)
-        
+         
         const pool = getPool()
         const result = await pool.query(
             `
             SELECT * FROM messages
             ${whereClause}
-            ORDER BY created_at ASC
+            ORDER BY created_at DESC
             LIMIT $${index++} OFFSET $${index}
             `,
             values
