@@ -53,7 +53,7 @@ export const getUserConversations = async(req:Request, res:Response) => {
 
 export const getConversationMessages = async(req:Request, res:Response) => {
     const { conversationId } = req.params as unknown as ConversationIdParamSchema
-    const { page, limit } = req.query as unknown as PaginationQuerySchema
+    const { cursor_time, cursor_id, limit } = req.query as unknown as PaginationQuerySchema
     const user = req.user
 
     if(!user) throw new AppError('Unauthenticated', 401)
@@ -65,7 +65,7 @@ export const getConversationMessages = async(req:Request, res:Response) => {
         throw new AppError('You are not part of this conversation', 403)
     }
     
-    const convoMessages = await fetchMessages({ limit, page }, conversationId)
+    const convoMessages = await fetchMessages({ limit, cursor_time, cursor_id }, conversationId)
 
     res.status(200).json({success:true, message:'Conversation messages fetched successfully', data:convoMessages})
 } 

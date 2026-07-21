@@ -7,6 +7,8 @@ export const createConversationSchema = z.object({
 
 export const paginationQuerySchema = z.object({
     page: z.coerce.number().int().positive().optional().default(1),
+    cursor_id: z.uuid().optional(),
+    cursor_time: z.coerce.date().optional(),
     limit: z.coerce.number().int().positive().max(100).optional().default(10),
 })
 

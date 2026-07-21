@@ -203,7 +203,7 @@ export const markMessagesSeen = async (conversationId: string, userId: string): 
 }
 
 
-export const fetchMessages = async(query:QueryType, conversationId?:string):Promise<Message[]> => {
+export const fetchMessages = async(query:{cursor_time?:Date, cursor_id?:string, limit:number}, conversationId?:string):Promise<Message[]> => {
     try {
 
         const values = []
@@ -214,21 +214,27 @@ export const fetchMessages = async(query:QueryType, conversationId?:string):Prom
             conditions.push(`conversation_id=$${index++}`)
             values.push(conversationId)
         }
+
+        if(query.cursor_time && query.cursor_id){
+            const timePlaceholder = index++ // e.g. 2
+            const idPlaceholder = index++ // e.g. 3
+            conditions.push(`(created_at < $${timePlaceholder} OR (created_at = $${timePlaceholder} AND id < $${idPlaceholder}))`)
+            values.push(query.cursor_time)
+            values.push(query.cursor_id)
+        }
+
         const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : ''
         
-        const page = query.page || 1
         const limit = query.limit || 10
-        const offset = (page - 1) * limit
         values.push(limit)
-        values.push(offset)
          
         const pool = getPool()
         const result = await pool.query(
             `
             SELECT * FROM messages
             ${whereClause}
-            ORDER BY created_at DESC
-            LIMIT $${index++} OFFSET $${index}
+            ORDER BY created_at DESC, id DESC
+            LIMIT $${index}
             `,
             values
         )
