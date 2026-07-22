@@ -308,4 +308,4 @@ This project pushed me significantly beyond CRUD. The most valuable lessons:
 
 ---
 
-*Deployment coming soon — DigitalOcean (API) + Expo EAS (mobile)*
+*This project is now deployed on a DigitalOcean Droplet with Nginx and SSH access*
