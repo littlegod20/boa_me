@@ -6,6 +6,7 @@ import { AppError } from '../middlewares/errorHandler'
 import { generateJwtToken } from '../utils/jwt.utils'
 import crypto from 'crypto'
 import { sendEmailVerificationToken, sendPasswordResetEmail } from '../utils/email.utils'
+import { insertProvider } from './provider.service'
 
 
 export const registerUser = async (user:RegisterInput)=>{
@@ -23,13 +24,28 @@ export const registerUser = async (user:RegisterInput)=>{
         // generate email verification token
         const email_token = generateVerificationToken()
 
-        await createUser({
+        const createdUser = await createUser({
             ...user,
             role: user.role ?? Role.CUSTOMER,
             password: hashed_password,
             email_verification_token: email_token.token,
             email_verification_token_expires_at: email_token.expiry
         })
+
+        // If role is provider, insert provider row
+        if (user.role === Role.PROVIDER) {
+            await insertProvider({
+                user_id: createdUser.id,
+                payout_method: user.payout_method,
+                momo_number: user.momo_number,
+                momo_provider: user.momo_provider,
+                bank_account_number: user.bank_account_number,
+                bank_account_name: user.bank_account_name,
+                bank_code: user.bank_code,
+                id_document_url: user.id_document_url,
+                service_area: user.service_area
+            });
+        }
 
         // send verification email
         await sendEmailVerificationToken(email_token.token, user.email)

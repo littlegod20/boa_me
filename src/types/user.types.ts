@@ -1,3 +1,5 @@
+import { CreateProvider } from './provider.types'
+
 export enum Role {
     PROVIDER = 'provider',
     CUSTOMER = 'customer',
@@ -47,12 +49,21 @@ export type CreateUserInput = {
     email_verified_at?:Date
 }
 
-export type RegisterInput = {
+type RegisterBase = {
     name: string
     email: string
     password: string
-    role: Role
     phone_number?: string
     address?: string
     profile_picture?: string
 }
+
+export type RegisterCustomerInput = RegisterBase & {
+    role?: Role.CUSTOMER | Role.ADMIN
+}
+
+export type RegisterProviderInput = RegisterBase & {
+    role: Role.PROVIDER
+} & Omit<CreateProvider, 'user_id'>
+
+export type RegisterInput = RegisterCustomerInput | RegisterProviderInput
